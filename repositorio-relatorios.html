@@ -1,0 +1,2086 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cola de Relatórios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,650;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;600;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f1ea; --surface:#fffdf8; --surface-2:#e9e4d8; --ink:#1c2230; --ink-2:#4a5263; --ink-3:#7c8494;
+  --line:#ddd6c8; --accent:#c2410c; --accent-soft:#fbe5d6;
+  --wf-bg:#f7f4ee; --wf-1:#c9c1b1; --wf-2:#e3ddd1; --wf-acc:#e07a3f;
+  --ok:#3f8f5a; --warn:#d49a1f; --bad:#c8432f;
+  --shadow:0 1px 2px rgba(28,34,48,.06),0 8px 24px rgba(28,34,48,.06);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#13161d; --surface:#1b1f28; --surface-2:#0e1015; --ink:#ece8df; --ink-2:#b7b2a7; --ink-3:#878377;
+    --line:#2f3542; --accent:#f08a4b; --accent-soft:#3a2518;
+    --wf-bg:#171b22; --wf-1:#4a5160; --wf-2:#2c323d; --wf-acc:#f08a4b;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#13161d; --surface:#1b1f28; --surface-2:#0e1015; --ink:#ece8df; --ink-2:#b7b2a7; --ink-3:#878377;
+  --line:#2f3542; --accent:#f08a4b; --accent-soft:#3a2518;
+  --wf-bg:#171b22; --wf-1:#4a5160; --wf-2:#2c323d; --wf-acc:#f08a4b;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 "IBM Plex Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body.lock{overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1240px;margin:0 auto;padding:0 16px}
+
+/* ---------- Header ---------- */
+header.top{padding:40px 0 20px;border-bottom:1px solid var(--line)}
+.eyebrow{font:500 12px/1.3 "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:Fraunces,Georgia,serif;font-weight:650;font-size:clamp(32px,5vw,52px);line-height:1.05;margin:12px 0 10px;letter-spacing:-.01em}
+h1 em{font-style:italic;color:var(--accent);font-weight:500}
+.lede{max-width:700px;color:var(--ink-2);margin:0}
+.toprow{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;cursor:pointer;white-space:nowrap;font-size:13px}
+.iconbtn:hover{border-color:var(--ink-3)}
+
+/* ---------- Controls ---------- */
+.controls{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:14px 0;border-bottom:1px solid var(--line)}
+.searchrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.search{flex:1;min-width:220px;position:relative}
+.search input{width:100%;padding:11px 14px 11px 38px;border:1px solid var(--line);border-radius:10px;background:var(--surface);outline:none}
+.search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+.search kbd{position:absolute;right:10px;top:50%;transform:translateY(-50%);font:12px "IBM Plex Mono";color:var(--ink-3);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.chips .lbl{font:500 11px "IBM Plex Mono";text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-right:4px;min-width:96px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.chip:hover{border-color:var(--ink-3)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip .dot{width:10px;height:10px;border-radius:50%;flex:none;border:1px solid rgba(0,0,0,.15)}
+.count{font:13px "IBM Plex Mono";color:var(--ink-3)}
+
+/* ---------- Grid ---------- */
+main{padding:26px 0 60px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:transform .18s,box-shadow .18s,border-color .18s}
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--ink-3)}
+.card:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.thumb{background:var(--surface-2);height:210px;overflow:hidden;position:relative;border-bottom:1px solid var(--line);padding:14px 14px 0}
+.thumb .ex{transform:scale(.36);transform-origin:top left;width:calc((100% ) / .36);pointer-events:none;box-shadow:0 4px 30px rgba(0,0,0,.18)}
+.thumb .sz{width:100%;height:100%}
+.thumb::after{content:"";position:absolute;left:0;right:0;bottom:0;height:46px;background:linear-gradient(transparent,var(--surface-2))}
+.cbody{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px;flex:1}
+.cat{font:500 11px "IBM Plex Mono";letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.card h3{font-family:Fraunces,Georgia,serif;font-weight:650;font-size:20px;margin:0;line-height:1.15}
+.card .pt{color:var(--ink-3);font-size:13px;margin-top:-2px}
+.card p{margin:4px 0 0;color:var(--ink-2);font-size:14px}
+.cfoot{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:10px;font-size:12px;color:var(--ink-3)}
+.fav{background:none;border:0;cursor:pointer;font-size:18px;color:var(--ink-3);padding:2px 4px;line-height:1}
+.fav.on{color:var(--accent)}
+.empty{padding:60px 0;text-align:center;color:var(--ink-3)}
+
+/* ---------- Section titles ---------- */
+.shead{margin:56px 0 18px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.shead h2{font-family:Fraunces,Georgia,serif;font-size:32px;margin:6px 0 0;line-height:1.1}
+.shead p{margin:6px 0 0;color:var(--ink-2);max-width:620px}
+
+/* ---------- Style gallery ---------- */
+.styles{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+.scard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column}
+.scard.cur{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.scard .thumb{height:200px}
+.sbody{padding:14px 16px 16px;display:flex;flex-direction:column;gap:8px;flex:1}
+.sbody h3{font-family:Fraunces,Georgia,serif;font-size:21px;margin:0}
+.sbody p{margin:0;color:var(--ink-2);font-size:14px}
+.sbody ul{margin:0;padding-left:16px;font-size:13.5px;color:var(--ink-2)}
+.sbody .ideal{font-size:12.5px;color:var(--ink-3)}
+.sbody .acts{display:flex;gap:8px;margin-top:auto;padding-top:6px}
+
+/* ---------- Guide ---------- */
+.guide{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.gcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
+.gcard h3{font-family:Fraunces,Georgia,serif;font-size:21px;margin:4px 0 10px}
+.gcard ol{margin:0;padding-left:18px;font-size:14px;color:var(--ink-2)}
+.gcard ol li{margin:5px 0}
+.gcard ol b{color:var(--ink)}
+.dec{display:grid;gap:6px;font-size:14px}
+.dec button{display:flex;justify-content:space-between;gap:10px;text-align:left;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer}
+.dec button:hover{border-color:var(--accent)}
+.dec button span{color:var(--accent);font-size:13px;white-space:nowrap}
+
+/* ---------- Modal ---------- */
+.overlay{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:28px;background:rgba(14,17,24,.32);backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1);opacity:0;visibility:hidden;transition:opacity .22s,visibility .22s}
+.overlay.on{opacity:1;visibility:visible}
+.modal{width:min(1180px,100%);height:min(900px,100%);display:flex;flex-direction:column;background:var(--bg);border-radius:22px;border:1px solid var(--line);box-shadow:0 40px 100px rgba(0,0,0,.35);overflow:hidden;transform:translateY(16px) scale(.975);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.overlay.on .modal{transform:none}
+.mhead{padding:20px 26px 0;border-bottom:1px solid var(--line);flex:none}
+.mtop{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.mhead h2{font-family:Fraunces,Georgia,serif;font-size:30px;line-height:1.1;margin:6px 0 2px}
+.mhead .pt{color:var(--ink-3);font-size:14px}
+.mnav{display:flex;gap:6px;flex:none}
+.tabs{display:flex;gap:2px;margin-top:12px;overflow-x:auto}
+.tab{background:none;border:0;padding:10px 14px;border-bottom:2px solid transparent;color:var(--ink-3);cursor:pointer;font-weight:500;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.mbody{overflow-y:auto;flex:1;padding:22px 26px 36px;overscroll-behavior:contain}
+.pane[hidden]{display:none}
+.stylebar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px}
+.stylebar .lbl{font:500 11px "IBM Plex Mono";text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-right:6px}
+.snote{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--ink-3);margin-bottom:14px}
+.snote b{color:var(--ink-2);font-weight:500}
+.stage{background:var(--surface-2);border-radius:18px;padding:30px;display:flex;justify-content:center}
+.stage .ex{width:100%;max-width:900px}
+
+.tagline{font-family:Fraunces,Georgia,serif;font-size:20px;line-height:1.4;margin:0 0 18px}
+.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:22px}
+.meta div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+.meta small{display:block;font:500 10px "IBM Plex Mono";text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.meta span{font-size:13.5px;font-weight:500}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:30px}
+.sec{margin-bottom:24px}
+.sec h4{font:500 11px "IBM Plex Mono";letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.sec h4::after{content:"";flex:1;height:1px;background:var(--line)}
+ul.lst{margin:0;padding:0;list-style:none}
+ul.lst li{padding:6px 0 6px 22px;position:relative;border-bottom:1px dashed var(--line);font-size:14.5px}
+ul.lst li:last-child{border-bottom:0}
+ul.lst li::before{content:"";position:absolute;left:4px;top:14px;width:8px;height:2px;background:var(--accent)}
+ul.lst.yes li::before{content:"✓";background:none;width:auto;height:auto;top:6px;left:2px;color:var(--ok);font-weight:600}
+ul.lst.no li::before{content:"×";background:none;width:auto;height:auto;top:5px;left:3px;color:var(--bad);font-weight:600;font-size:16px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.wfbox{background:var(--wf-bg);border:1px solid var(--line);border-radius:var(--radius);padding:20px 20px 20px 46px}
+ol.anno{margin:14px 0 0;padding:0;list-style:none;counter-reset:a}
+ol.anno li{counter-increment:a;display:flex;gap:10px;padding:5px 0;font-size:14px}
+ol.anno li::before{content:counter(a);flex:none;width:20px;height:20px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:600 11px/20px "IBM Plex Mono";text-align:center;margin-top:1px}
+.tip{background:var(--accent-soft);border-radius:10px;padding:12px 14px;font-size:14px}
+.tip b{color:var(--accent)}
+.asks{display:flex;flex-direction:column;gap:8px}
+.ask{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.ask button{flex:none}
+
+/* ---------- Builder ---------- */
+.pgrid{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:24px;align-items:start}
+.builder{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.bfields{padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;border-bottom:1px solid var(--line)}
+.bfields label{display:flex;flex-direction:column;gap:4px;font:500 11px "IBM Plex Mono";text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.bfields input,.bfields select,.bfields textarea{font:14px "IBM Plex Sans";text-transform:none;letter-spacing:0;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;outline:none;width:100%}
+.bfields textarea{resize:vertical;min-height:70px}
+.bfields input:focus,.bfields select:focus,.bfields textarea:focus{border-color:var(--accent)}
+.bfields .full{grid-column:1/-1}
+.mods{padding:12px 14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.mods .lbl{font:500 11px "IBM Plex Mono";text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);width:100%;margin-bottom:2px}
+.mods .chip{font-size:12.5px;padding:4px 10px}
+.mods .chip[aria-pressed="true"],.toggle[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.pout{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;position:sticky;top:0}
+.ptabs{display:flex;gap:4px;padding:10px 10px 0;flex-wrap:wrap}
+.seg{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;color:var(--ink-2)}
+.seg[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.ptabhelp{padding:8px 16px 0;font-size:12.5px;color:var(--ink-3)}
+pre.prompt{margin:0;padding:16px;font:12.8px/1.65 "IBM Plex Mono",monospace;white-space:pre-wrap;word-wrap:break-word;max-height:560px;overflow:auto}
+pre.prompt mark{background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:0 3px;font-weight:500}
+pre.prompt .fill{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ink);border-radius:4px;padding:0 3px}
+pre.prompt .sty{background:color-mix(in srgb,#6d5bd0 14%,transparent);border-radius:4px;padding:0 3px}
+.bbar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line);background:var(--bg);flex-wrap:wrap}
+.bbar small{color:var(--ink-3);font-size:12.5px}
+.primary{background:var(--ink);color:var(--bg);border:0;border-radius:999px;padding:9px 18px;cursor:pointer;font-weight:500;font-size:14px}
+.primary:hover{opacity:.88}
+.ghost{background:transparent;border:1px solid var(--line);border-radius:999px;padding:5px 11px;cursor:pointer;font-size:12.5px;color:var(--ink-2)}
+.ghost:hover{border-color:var(--ink-3);color:var(--ink)}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:.25s;z-index:60;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+footer.pg{border-top:1px solid var(--line);padding:22px 0 40px;color:var(--ink-3);font-size:13px;margin-top:40px}
+
+/* ---------- Wireframe (aba Estrutura) ---------- */
+.wf{display:flex;flex-direction:column;gap:12px}
+.wf i{display:block;font-style:normal}
+.b{position:relative}
+.wf .b[data-n]::before{content:attr(data-n);position:absolute;left:-30px;top:2px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font:600 11px/20px "IBM Plex Mono";text-align:center}
+.wf .b-split>.b::before{display:none}
+.b-h .t{height:14px;width:62%;background:var(--wf-1);border-radius:3px}
+.b-h .m{height:6px;width:34%;background:var(--wf-2);border-radius:3px;margin-top:6px}
+.ln{height:6px;background:var(--wf-2);border-radius:3px;margin:5px 0}
+.b-callout{border-left:3px solid var(--wf-acc);background:color-mix(in srgb,var(--wf-acc) 10%,transparent);padding:8px 10px;border-radius:0 6px 6px 0}
+.b-callout .ln{background:color-mix(in srgb,var(--wf-acc) 35%,var(--wf-2))}
+.b-callout .ln:first-child{width:40%;height:7px;background:var(--wf-acc)}
+.b-bullets .r{display:flex;gap:7px;align-items:center;margin:5px 0}
+.b-bullets .r i:first-child{width:6px;height:6px;border-radius:50%;background:var(--wf-1);flex:none}
+.b-bullets .r .ln{margin:0}
+.b-kpi{display:grid;gap:7px}
+.kp{background:var(--surface);border:1px solid var(--wf-2);border-radius:6px;padding:7px 8px}
+.kp .a{height:5px;width:60%;background:var(--wf-2);border-radius:3px}
+.kp .v{height:12px;width:75%;background:var(--wf-1);border-radius:3px;margin-top:6px}
+.kp .d{height:5px;width:35%;border-radius:3px;margin-top:5px;background:var(--ok)}
+.kp:nth-child(3n+2) .d{background:var(--bad)}
+.b-chart{background:var(--surface);border:1px solid var(--wf-2);border-radius:6px;padding:9px;height:92px;display:flex;align-items:flex-end;gap:6px}
+.b-chart .bar{flex:1;background:var(--wf-1);border-radius:2px 2px 0 0}
+.b-chart .bar.hl{background:var(--wf-acc)}
+.b-chart svg{width:100%;height:100%;display:block}
+.pie{width:70px;height:70px;border-radius:50%;margin:auto;background:conic-gradient(var(--wf-acc) 0 38%,var(--wf-1) 38% 70%,var(--wf-2) 70% 100%)}
+.wfall{display:flex;align-items:flex-end;gap:6px;height:100%;width:100%}
+.wfall>span{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end}
+.wfall i{border-radius:2px}
+.b-table{background:var(--surface);border:1px solid var(--wf-2);border-radius:6px;overflow:hidden}
+.b-table .tr{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;padding:6px 8px;border-top:1px solid var(--wf-2)}
+.b-table .tr:first-child{border-top:0;background:var(--wf-2)}
+.b-table .tr i{height:5px;background:var(--wf-2);border-radius:3px}
+.b-table .tr:first-child i{background:var(--wf-1)}
+.b-table .tr i:nth-child(4){background:color-mix(in srgb,var(--ok) 55%,var(--wf-2))}
+.b-table .tr:nth-child(3n) i:nth-child(4){background:color-mix(in srgb,var(--bad) 55%,var(--wf-2))}
+.b-rag{display:grid;gap:7px}
+.rg{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--wf-2);border-radius:6px;padding:7px 8px}
+.rg i:first-child{width:11px;height:11px;border-radius:50%;flex:none}
+.rg .ln{flex:1;margin:0}
+.b-timeline{position:relative;height:38px}
+.b-timeline::before{content:"";position:absolute;left:4px;right:4px;top:12px;height:2px;background:var(--wf-1)}
+.b-timeline .ds{display:flex;justify-content:space-between;position:relative}
+.b-timeline .dt{display:flex;flex-direction:column;align-items:center;gap:7px;width:14px}
+.b-timeline .dt i:first-child{width:12px;height:12px;border-radius:50%;background:var(--surface);border:2px solid var(--wf-1);margin-top:6px}
+.b-timeline .dt.done i:first-child{background:var(--wf-acc);border-color:var(--wf-acc)}
+.b-timeline .dt i:last-child{width:30px;height:5px;background:var(--wf-2);border-radius:3px}
+.b-matrix{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.b-matrix .q{background:var(--surface);border:1px solid var(--wf-2);border-radius:6px;padding:7px 8px;min-height:52px}
+.b-matrix .q b{font:600 12px "IBM Plex Mono";color:var(--ink-3)}
+.b-heat{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;padding:6px;background:var(--surface);border:1px solid var(--wf-2);border-radius:6px}
+.b-heat i{aspect-ratio:2.2/1;border-radius:3px}
+.b-funnel{display:flex;flex-direction:column;align-items:center;gap:4px}
+.b-funnel i{height:12px;border-radius:3px;background:var(--wf-1)}
+.b-funnel i:last-child{background:var(--wf-acc)}
+.b-gauge{background:var(--surface);border:1px solid var(--wf-2);border-radius:6px;padding:8px;display:flex;justify-content:center}
+.b-split{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.b-split>.b{min-width:0}
+
+/* =========================================================
+   EXEMPLOS RENDERIZADOS — base + 6 estilos
+   ========================================================= */
+.ex{--x-bg:#fff;--x-fg:#141414;--x-mut:#6f6f6f;--x-line:#e7e7e7;--x-card:transparent;--x-cb:0;--x-r:0px;--x-sh:none;
+  --x-acc:#d9480f;--x-accbg:transparent;--x-c1:#141414;--x-c2:#8c8c8c;--x-c3:#b8b8b8;--x-c4:#d6d6d6;--x-c5:#ececec;
+  --x-pos:#2b8a3e;--x-neg:#c92a2a;--x-warn:#e8a317;--x-hl:#d9480f;--x-bn:#cfcfcf;--x-th:transparent;--x-thc:var(--x-mut);
+  --x-head:"IBM Plex Sans",system-ui,sans-serif;--x-body:"IBM Plex Sans",system-ui,sans-serif;--x-num:"IBM Plex Sans",system-ui,sans-serif;
+  --x-hw:600;--x-bar-r:0px;--x-area:0;
+  background:var(--x-bg);color:var(--x-fg);font-family:var(--x-body);font-size:14px;line-height:1.5;padding:38px 42px 22px;
+  display:flex;flex-direction:column;gap:22px;border-radius:6px;box-shadow:0 2px 18px rgba(0,0,0,.10);text-align:left;overflow:hidden}
+.ex *{box-sizing:border-box}
+.x-eb{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--x-acc);font-weight:600;margin-bottom:6px}
+.x-t{font-family:var(--x-head);font-weight:var(--x-hw);font-size:27px;line-height:1.18;letter-spacing:-.01em}
+.x-s{color:var(--x-mut);font-size:13px;margin-top:6px}
+.x-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.x-kpi{background:var(--x-card);border:var(--x-cb);border-radius:var(--x-r);box-shadow:var(--x-sh);padding:14px 16px}
+.x-kl{font-size:11px;color:var(--x-mut);text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+.x-kv{font-family:var(--x-num);font-size:26px;font-weight:700;line-height:1.15;margin-top:4px;font-variant-numeric:tabular-nums}
+.x-kd{font-size:12.5px;margin-top:5px;color:var(--x-mut);font-weight:600}
+.x-kd.pos{color:var(--x-pos)}.x-kd.neg{color:var(--x-neg)}
+.x-ks{font-size:11.5px;color:var(--x-mut);margin-top:2px}
+.x-card{background:var(--x-card);border:var(--x-cb);border-radius:var(--x-r);box-shadow:var(--x-sh);padding:16px 18px;min-width:0}
+.x-h{font-family:var(--x-head);font-weight:600;font-size:14.5px;margin-bottom:10px;line-height:1.3}
+.x-callout{border-left:3px solid var(--x-acc);background:var(--x-accbg);padding:14px 18px;border-radius:0 var(--x-r) var(--x-r) 0}
+.x-ch{font-size:11px;text-transform:uppercase;letter-spacing:.09em;font-weight:700;color:var(--x-acc);margin-bottom:4px}
+.x-quote{margin:0;font-family:var(--x-head);font-size:19px;line-height:1.45;padding:6px 0 6px 20px;border-left:3px solid var(--x-acc)}
+.x-text p{margin:0}
+.x-text .x-h{margin-bottom:6px}
+.x-bul ul{margin:0;padding-left:18px}.x-bul li{margin:5px 0}.x-bul li::marker{color:var(--x-acc)}
+.x-tw{overflow-x:auto}
+.x-tab table{width:100%;border-collapse:collapse;font-size:13px}
+.x-tab th{text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--x-thc);background:var(--x-th);padding:8px 10px;border-bottom:1.5px solid var(--x-fg);white-space:nowrap}
+.x-tab td{padding:8px 10px;border-bottom:1px solid var(--x-line);vertical-align:top}
+.x-tab td.n{text-align:right;font-family:var(--x-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.x-tab td.neg{color:var(--x-neg)}.x-tab td.pos{color:var(--x-pos)}
+.x-tab tr.tot td{font-weight:700;border-top:1.5px solid var(--x-fg)}
+.x-note{font-size:11.5px;color:var(--x-mut);margin-top:8px}
+.x-split{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.x-split>*{min-width:0}
+.x-split .x-kpis{grid-template-columns:1fr}
+.x-rag{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.x-rg{display:flex;gap:10px;align-items:flex-start;background:var(--x-card);border:var(--x-cb);border-radius:var(--x-r);box-shadow:var(--x-sh);padding:12px 14px}
+.x-rg>i{width:12px;height:12px;border-radius:50%;flex:none;margin-top:4px}
+.x-rg i.ok{background:var(--x-pos)}.x-rg i.warn{background:var(--x-warn)}.x-rg i.bad{background:var(--x-neg)}
+.x-rg b{display:block;font-size:13.5px}.x-rg span{font-size:12.5px;color:var(--x-mut);display:block;line-height:1.35}
+.x-tl{display:flex;position:relative;padding-top:2px}
+.x-tl::before{content:"";position:absolute;left:6px;right:6px;top:9px;height:2px;background:var(--x-line)}
+.x-tl>div{position:relative;flex:1;min-width:0;padding-right:8px}
+.x-tl i{display:block;width:14px;height:14px;border-radius:50%;background:var(--x-bg);border:2px solid var(--x-c3);margin-bottom:8px;position:relative}
+.x-tl .done i{background:var(--x-acc);border-color:var(--x-acc)}
+.x-tl b{display:block;font-size:12.5px;font-family:var(--x-num)}.x-tl span{font-size:12px;color:var(--x-mut);display:block;line-height:1.3}
+.x-swot{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.x-q{background:var(--x-card);border:var(--x-cb);border-radius:var(--x-r);box-shadow:var(--x-sh);padding:14px 16px;border-top:3px solid var(--x-pos)}
+.x-q.neg{border-top-color:var(--x-neg)}
+.x-qh{font-weight:600;margin-bottom:6px;display:flex;gap:8px;align-items:baseline}
+.x-qh b{font-family:var(--x-head);font-size:22px;color:var(--x-pos)}.x-q.neg .x-qh b{color:var(--x-neg)}
+.x-q ul{margin:0;padding-left:18px;font-size:13px}.x-q li{margin:3px 0}
+.x-whys{list-style:none;margin:0;padding:0}
+.x-whys li{display:flex;flex-direction:column;padding:7px 12px;border-left:2px solid var(--x-line);margin:4px 0}
+.x-whys li span{font-size:11.5px;color:var(--x-mut)}.x-whys li b{font-weight:500}
+.x-whys li.root{border-left:3px solid var(--x-acc);background:color-mix(in srgb,var(--x-acc) 8%,transparent)}
+.x-whys li.root b{font-weight:700}.x-whys li.root span{color:var(--x-acc);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.x-memo{display:grid;grid-template-columns:1fr 1fr;border-top:1.5px solid var(--x-fg);border-bottom:1px solid var(--x-line)}
+.x-memo div{padding:8px 0;display:flex;gap:10px;font-size:13px;border-bottom:1px solid var(--x-line)}
+.x-memo span{color:var(--x-mut);width:62px;flex:none}
+.x-leg{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--x-mut);margin-top:8px}
+.x-leg span{display:flex;gap:6px;align-items:center}
+.sw{width:10px;height:10px;border-radius:2px;display:inline-block;flex:none}
+.tgsw{height:0;border-top:2px dashed var(--x-fg);border-radius:0;width:14px}.bandsw{background:var(--x-c2);opacity:.3}
+.x-donut{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.x-donut ul{list-style:none;margin:0;padding:0;flex:1;min-width:150px;font-size:13px}
+.x-donut li{display:flex;gap:8px;align-items:center;padding:3px 0}.x-donut li span{flex:1}.x-donut li b{font-family:var(--x-num)}
+.x-donut svg{width:150px;flex:none}
+.dbg{fill:none;stroke:var(--x-line);stroke-width:22}
+.x-gauge{text-align:center}.x-gauge svg{width:240px;max-width:100%;margin:0 auto}.x-gauge p{margin:4px 0 0;font-size:12.5px;color:var(--x-mut)}
+.gbg{fill:none;stroke:var(--x-line);stroke-width:18;stroke-linecap:round}.gfg{fill:none;stroke:var(--x-hl);stroke-width:18;stroke-linecap:round}.gtg{stroke:var(--x-fg);stroke-width:2.5}
+.x-svg{width:100%;height:auto;display:block;overflow:visible}
+.x-chart>.x-svg{max-height:250px}
+.x-svg text{font-family:var(--x-body)}
+.x-svg .lb{fill:var(--x-mut);font-size:12px}.x-svg .sm{font-size:10.5px}
+.x-svg .vl{fill:var(--x-fg);font-size:12px;font-weight:600;font-family:var(--x-num)}
+.x-svg .vh{fill:var(--x-hl)}.x-svg .vl.neg{fill:var(--x-neg)}.x-svg .inbar{fill:var(--x-bg)}
+.x-svg .big{font-size:24px}.x-svg .big2{font-size:30px}
+.x-svg .bn{fill:var(--x-bn);rx:var(--x-bar-r)}.x-svg .bh{fill:var(--x-hl);rx:var(--x-bar-r)}.x-svg .fnb{fill:var(--x-c1);rx:var(--x-bar-r)}
+.x-svg .bpos{fill:var(--x-pos)}.x-svg .bneg{fill:var(--x-neg)}
+.x-svg .ax{stroke:var(--x-line);stroke-width:1.5}.x-svg .gr{stroke:var(--x-line);stroke-width:1;stroke-dasharray:2 4}
+.x-svg .tg{stroke:var(--x-fg);stroke-width:1.5;stroke-dasharray:5 4}.x-svg .an{stroke:var(--x-mut);stroke-dasharray:3 3}
+.x-svg .an-t{font-size:11px;font-style:italic}.x-svg .cn{stroke:var(--x-mut);stroke-dasharray:2 2}
+.x-svg .ln{fill:none;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+.x-svg .ln.c1{stroke:var(--x-c1)}.x-svg .ln.c2{stroke:var(--x-c2)}.x-svg .ln.dash{stroke-dasharray:6 5}
+.x-svg .dt.c1{fill:var(--x-c1)}.x-svg .dt.c2{fill:var(--x-c2)}
+.x-svg .area{fill:var(--x-c1);opacity:var(--x-area)}.x-svg .band{fill:var(--x-c2);opacity:.16}
+.x-svg .hh{fill:var(--x-neg);fill-opacity:.32}.x-svg .hm{fill:var(--x-warn);fill-opacity:.32}.x-svg .hl{fill:var(--x-pos);fill-opacity:.22}
+.x-svg .hdot{fill:var(--x-fg)}.x-svg .hid{fill:var(--x-bg);font-size:9.5px;font-weight:700}
+.x-foot{display:flex;justify-content:space-between;font-size:10.5px;color:var(--x-mut);border-top:1px solid var(--x-line);padding-top:10px;margin-top:2px}
+
+/* Minimalista */
+.s-minimal .x-kpi{padding:10px 0 0;border-top:1px solid var(--x-fg)}
+.s-minimal .x-card{padding:0}
+.s-minimal .x-rg{padding:10px 0 0;border-top:1px solid var(--x-line)}
+.s-minimal .x-q{padding:10px 0 0}
+.s-minimal .x-callout{border-left-width:2px}
+.s-minimal .x-t{font-weight:500;letter-spacing:-.02em;font-size:28px}
+.s-minimal .x-kv{font-weight:500;font-size:28px}
+.s-minimal .x-eb{color:var(--x-mut)}
+
+/* Moderno */
+.s-modern{--x-bg:#f5f6fb;--x-fg:#1b1d3a;--x-mut:#6b6f91;--x-line:#e3e5f2;--x-card:#fff;--x-cb:1px solid #eceefa;--x-r:16px;
+  --x-sh:0 6px 24px rgba(40,45,110,.07);--x-acc:#5b5bd6;--x-accbg:#eeeefe;--x-c1:#5b5bd6;--x-c2:#a78bfa;--x-c3:#22c3a6;--x-c4:#f59e8b;--x-c5:#c7cbe8;
+  --x-hl:#5b5bd6;--x-bn:#cfcdf6;--x-pos:#12a37e;--x-neg:#e5484d;--x-warn:#f5a524;
+  --x-head:"Manrope",system-ui,sans-serif;--x-body:"Manrope",system-ui,sans-serif;--x-num:"Manrope",system-ui,sans-serif;--x-hw:800;--x-bar-r:6px;--x-area:.12;border-radius:22px}
+.s-modern .x-t{background:linear-gradient(90deg,#4f46e5,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent}
+.s-modern .x-kd{display:inline-block;padding:2px 9px;border-radius:999px;background:#eef0f7}
+.s-modern .x-kd.pos{background:#e1f6ef}.s-modern .x-kd.neg{background:#fdeaea}
+.s-modern .x-kv{font-weight:800}
+.s-modern .x-callout{border-left:0;border-radius:16px;background:linear-gradient(135deg,#ecebff,#f5eeff)}
+.s-modern .x-tab th{border-bottom:1px solid var(--x-line)}.s-modern .x-tab tr.tot td{border-top:1px solid var(--x-line)}
+.s-modern .x-q{border-top:0;border-left:4px solid var(--x-pos)}.s-modern .x-q.neg{border-left-color:var(--x-neg)}
+.s-modern .x-quote{border-left:0;background:#fff;border-radius:16px;padding:18px 22px;box-shadow:var(--x-sh)}
+
+/* Corporativo */
+.s-corporate{--x-bg:#fff;--x-fg:#1d2939;--x-mut:#5d6b80;--x-line:#dde3ec;--x-card:#fff;--x-cb:1px solid #d3dbe6;--x-r:2px;
+  --x-acc:#0b2a4a;--x-accbg:#f1f5fa;--x-c1:#0b2a4a;--x-c2:#2f7ab8;--x-c3:#8fb8de;--x-c4:#12a39a;--x-c5:#c9d6e4;
+  --x-hl:#2f7ab8;--x-bn:#0b2a4a;--x-th:#0b2a4a;--x-thc:#fff;padding-top:0;border-radius:0}
+.s-corporate .x-title{margin:0 -42px;padding:24px 42px 20px;background:#0b2a4a;color:#fff;border-bottom:4px solid #2f7ab8}
+.s-corporate .x-eb{color:#8fb8de}.s-corporate .x-s{color:#c3d3e6}
+.s-corporate .x-tab th{border-bottom:0}
+.s-corporate .x-tab tbody tr:nth-child(even) td{background:#f4f7fb}
+.s-corporate .x-h{text-transform:uppercase;font-size:11.5px;letter-spacing:.07em;color:#0b2a4a;border-bottom:2px solid #0b2a4a;padding-bottom:6px;font-weight:700}
+.s-corporate .x-kpi{border-top:3px solid #2f7ab8}
+.s-corporate .x-kv{color:#0b2a4a}
+.s-corporate .x-ch{color:#2f7ab8}
+.s-corporate .x-foot span:first-child::before{content:"CONFIDENCIAL · USO INTERNO · ";font-weight:700;color:#0b2a4a}
+
+/* Consultoria */
+.s-consulting{--x-bg:#fff;--x-fg:#051c2c;--x-mut:#5f6b77;--x-line:#d9dee3;--x-acc:#00a3a1;--x-accbg:transparent;
+  --x-c1:#051c2c;--x-c2:#00a3a1;--x-c3:#7a8b99;--x-c4:#b8c4cd;--x-c5:#dfe5ea;--x-hl:#00a3a1;--x-bn:#051c2c;
+  --x-head:"Source Serif 4",Georgia,serif;--x-hw:600;border-radius:0}
+.s-consulting .x-t{font-size:29px}
+.s-consulting .x-eb{color:var(--x-mut)}
+.s-consulting .x-card{padding:12px 0 0;border-top:1.5px solid #051c2c}
+.s-consulting .x-h{font-size:17.5px}
+.s-consulting .x-chart::after{content:"Fonte: base transacional interna; análise da equipe de Operações.";display:block;font-size:10.5px;color:var(--x-mut);margin-top:8px;font-style:italic}
+.s-consulting .x-kpi{padding:10px 0 0;border-top:1.5px solid #051c2c}
+.s-consulting .x-callout{border-left-width:5px}
+.s-consulting .x-rg{border-top:1px solid var(--x-line);padding:10px 0 0}
+.s-consulting .x-q{padding:12px 0 0;border-top-width:2px}
+
+/* Editorial */
+.s-editorial{--x-bg:#f6f0e4;--x-fg:#1b1a17;--x-mut:#6e6556;--x-line:#d8cdb8;--x-acc:#b3261e;--x-c1:#1b1a17;--x-c2:#b3261e;
+  --x-c3:#8a7f6c;--x-c4:#c4b89f;--x-c5:#e2d8c4;--x-hl:#b3261e;--x-bn:#2b2925;--x-pos:#3d6b35;--x-neg:#b3261e;
+  --x-head:"Fraunces",Georgia,serif;--x-body:"Source Serif 4",Georgia,serif;--x-num:"Fraunces",Georgia,serif;--x-hw:650;border-radius:0;font-size:14.5px}
+.s-editorial .x-t{font-size:36px;line-height:1.08;letter-spacing:-.015em}
+.s-editorial .x-title{border-bottom:3px solid #1b1a17;padding-bottom:14px}
+.s-editorial .x-eb{font-family:"IBM Plex Mono",monospace}
+.s-editorial .x-kv{font-size:38px;font-weight:600}
+.s-editorial .x-kpi{padding:8px 0 0;border-top:1px solid #1b1a17}
+.s-editorial .x-kl,.s-editorial .x-tab th,.s-editorial .x-ch{font-family:"IBM Plex Sans",sans-serif}
+.s-editorial .x-card{padding:12px 0 0;border-top:3px solid #1b1a17}
+.s-editorial .x-h{font-size:20px;font-style:italic;font-weight:500}
+.s-editorial .x-callout{border:0;border-top:1px solid #1b1a17;border-bottom:1px solid #1b1a17;padding:14px 0;font-size:16px}
+.s-editorial .x-quote{border:0;font-style:italic;font-size:24px;text-align:center;padding:8px 30px;color:#b3261e;font-weight:500}
+.s-editorial .x-quote::before{content:"“";display:block;font-size:60px;line-height:.6;margin-bottom:6px}
+.s-editorial .x-title+.x-text p::first-letter{float:left;font-family:Fraunces,serif;font-size:48px;line-height:.85;padding:5px 8px 0 0;color:#b3261e}
+.s-editorial .x-rg{border-top:1px solid #1b1a17;padding:10px 0 0}
+.s-editorial .x-q{padding:12px 0 0;border-top-width:3px}
+
+/* Dark / Tech */
+.s-dark{--x-bg:#0d1117;--x-fg:#e6edf3;--x-mut:#8b949e;--x-line:#262c36;--x-card:#161b22;--x-cb:1px solid #2a313c;--x-r:10px;
+  --x-acc:#39d0d8;--x-accbg:rgba(57,208,216,.07);--x-c1:#39d0d8;--x-c2:#a371f7;--x-c3:#3fb950;--x-c4:#f0883e;--x-c5:#58606b;
+  --x-hl:#39d0d8;--x-bn:#2c5566;--x-pos:#3fb950;--x-neg:#f85149;--x-warn:#d29922;--x-th:#1c232d;
+  --x-num:"JetBrains Mono",ui-monospace,monospace;--x-area:.12;--x-bar-r:3px;border-radius:12px}
+.s-dark .x-kv{font-size:23px;color:#fff;text-shadow:0 0 18px rgba(57,208,216,.35)}
+.s-dark .x-kpi:first-child .x-kv{color:#39d0d8}
+.s-dark .x-eb{font-family:"JetBrains Mono",monospace}
+.s-dark .x-tab th{border-bottom:1px solid var(--x-line)}.s-dark .x-tab tr.tot td{border-top:1px solid #39d0d8}
+.s-dark .x-callout{border-radius:0 10px 10px 0}
+
+/* ---------- Responsive ---------- */
+@media (max-width:900px){
+  .cols,.pgrid,.two{grid-template-columns:1fr}
+  .pout{position:static}
+}
+@media (max-width:640px){
+  .overlay{padding:0}
+  .modal{height:100%;border-radius:0;border:0}
+  .mhead{padding:14px 16px 0}.mbody{padding:16px 16px 30px}
+  .mhead h2{font-size:24px}
+  .mtop{flex-direction:column}.mnav{align-self:flex-end;order:-1}
+  .stage{padding:10px;border-radius:12px}
+  .ex{padding:22px 18px 16px;gap:16px}
+  .s-corporate .x-title{margin:0 -18px;padding:18px}
+  .x-split,.x-swot,.x-memo{grid-template-columns:1fr}
+  .x-tl{flex-wrap:wrap;row-gap:12px}.x-tl>div{flex:0 0 33%}.x-tl::before{display:none}
+  .meta{grid-template-columns:1fr 1fr}
+  .bfields{grid-template-columns:1fr}
+  .search kbd{display:none}
+  .chips .lbl{width:100%}
+  .x-t{font-size:22px}.s-editorial .x-t{font-size:27px}
+}
+@media print{.controls,.overlay,.iconbtn{display:none}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="toprow">
+      <div>
+        <div class="eyebrow">Repositório · tipos e estilos de relatório para IA</div>
+        <h1>A cola visual dos <em>relatórios</em></h1>
+        <p class="lede">Escolha o tipo de relatório, veja um exemplo preenchido com dados, troque o estilo visual e copie um prompt em português pronto para colar na IA. Tema, público e dados você preenche uma vez só — o prompt se adapta a qualquer tipo e estilo.</p>
+      </div>
+      <button class="iconbtn" id="themeBtn" title="Alternar tema da página">◐ Tema</button>
+    </div>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="wrap">
+    <div class="searchrow">
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Buscar tipo, objetivo, palavra-chave… (ex.: DRE, causa raiz, ranking)" autocomplete="off">
+        <kbd>/</kbd>
+      </div>
+      <button class="chip" id="favFilter" aria-pressed="false">★ Favoritos</button>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="chips" id="catChips"><span class="lbl">Categoria</span></div>
+    <div class="chips" id="goalChips"><span class="lbl">Objetivo</span></div>
+    <div class="chips" id="styleChips"><span class="lbl">Estilo visual</span></div>
+  </div>
+</div>
+
+<main>
+  <div class="wrap">
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" hidden>Nenhum relatório encontrado com esses filtros.</div>
+
+    <div class="shead" id="estilos">
+      <div>
+        <div class="eyebrow">Estilos visuais</div>
+        <h2>Como o relatório vai parecer</h2>
+        <p>O tipo define o <b>conteúdo e a estrutura</b>; o estilo define a <b>aparência</b>. Qualquer tipo combina com qualquer estilo — a descrição do estilo entra automaticamente no prompt.</p>
+      </div>
+    </div>
+    <div class="styles" id="styles"></div>
+
+    <div class="shead"><div><div class="eyebrow">Guia rápido</div><h2>Antes de pedir para a IA</h2></div></div>
+    <section class="guide">
+      <div class="gcard">
+        <div class="eyebrow">Atalho</div>
+        <h3>Qual relatório eu uso?</h3>
+        <div class="dec" id="decision"></div>
+      </div>
+      <div class="gcard">
+        <div class="eyebrow">Anatomia</div>
+        <h3>O que todo prompt de relatório precisa</h3>
+        <ol>
+          <li><b>Papel</b> — “Atue como analista sênior de…”</li>
+          <li><b>Público</b> — quem lê muda o nível de detalhe.</li>
+          <li><b>Objetivo</b> — decidir, acompanhar, explicar, prestar contas.</li>
+          <li><b>Estrutura</b> — as seções, em ordem.</li>
+          <li><b>Dados</b> — cole a base ou descreva as colunas.</li>
+          <li><b>Regras</b> — tamanho, tom, o que não fazer.</li>
+          <li><b>Estilo e formato</b> — aparência e tipo de arquivo.</li>
+        </ol>
+      </div>
+      <div class="gcard">
+        <div class="eyebrow">Cuidados</div>
+        <h3>Antes de confiar no resultado</h3>
+        <ol>
+          <li><b>Confira os números.</b> IA pode errar contas — peça que mostre o cálculo das variações.</li>
+          <li><b>Proíba inventar.</b> Todos os prompts daqui pedem que dados faltantes sejam sinalizados.</li>
+          <li><b>Dados sensíveis:</b> anonimize CPF/CNPJ, nomes e contas antes de colar.</li>
+          <li><b>Itere:</b> peça primeiro a estrutura, depois o texto final.</li>
+        </ol>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="pg"><div class="wrap">Atalhos: <b>/</b> busca · <b>Esc</b> fecha · <b>← →</b> navega entre relatórios abertos. Todos os números dos exemplos são fictícios.</div></footer>
+
+<div class="overlay" id="overlay" aria-hidden="true">
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const R = [
+{
+  id:"executive", nome:"Executive Report", pt:"Relatório Executivo", cat:"Executivo",
+  obj:["decidir","prestar contas"],
+  tag:"Visão de alto nível, focada em resultado e decisão. O leitor deve entender tudo nos primeiros 30 segundos.",
+  publico:"Diretoria, C-level", tamanho:"2–4 páginas", tom:"Direto e assertivo",
+  carac:["Começa pela conclusão (resumo executivo no topo)","Poucos KPIs, sempre com meta e comparação","Linguagem sem jargão técnico","Termina com recomendações e decisões pedidas"],
+  usar:["Fechamento mensal ou trimestral para a diretoria","Quando há uma decisão a ser tomada","Para resumir um projeto ou análise longa"],
+  evitar:["Quando o leitor precisa de detalhe operacional","Para registro técnico ou auditoria"],
+  estrutura:["h|Título, período e autor","callout|Resumo executivo: o que aconteceu e por que importa","kpi:4|3–5 KPIs principais vs meta e período anterior","chart:line|Tendência do indicador central","split:bullets-3+bullets-3|Destaques positivos · Riscos e pontos de atenção","callout|Recomendações e decisões solicitadas"],
+  pedidos:["Transforme esta planilha de resultados em um relatório executivo para a diretoria","Resuma este relatório de 20 páginas em um executive report de 2 páginas","Crie um executive report sobre a performance da rede de correspondentes no trimestre"],
+  dica:"Peça explicitamente o padrão <b>BLUF</b> (Bottom Line Up Front): conclusão primeiro, detalhes depois.",
+  prompt:`Atue como um analista sênior preparando um RELATÓRIO EXECUTIVO para [PÚBLICO].
+Tema: [TEMA]
+Período: [PERÍODO]
+
+Estrutura obrigatória:
+1. Resumo executivo (máx. 5 linhas): o que aconteceu, por que importa e o que precisa ser decidido.
+2. 3 a 5 KPIs principais — para cada um: valor atual, meta, variação vs período anterior e status (acima/abaixo da meta).
+3. Tendência do indicador mais importante, com uma frase de leitura.
+4. Destaques positivos (até 3) e riscos/pontos de atenção (até 3).
+5. Recomendações acionáveis, cada uma com responsável sugerido e prazo.
+
+Regras:
+- Linguagem direta, sem jargão técnico. Frases curtas.
+- Todo número precisa de contexto (meta, comparação ou tendência).
+- Negrito apenas no que exige ação.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados:
+[DADOS]`
+},
+{
+  id:"onepage", nome:"One-Page Report", pt:"Relatório de Uma Página", cat:"Executivo",
+  obj:["decidir","acompanhar"],
+  tag:"Tudo o que importa cabe em uma única página. A restrição de espaço força clareza e priorização.",
+  publico:"Gestores e diretoria", tamanho:"1 página (A4)", tom:"Sintético",
+  carac:["Limite rígido de uma página","Pergunta central + resposta no topo","No máximo 3 números e 1 gráfico","Layout em blocos, leitura em Z"],
+  usar:["Atualizações rápidas para quem tem pouco tempo","Anexo de e-mail ou pauta de reunião","Primeira versão antes de um relatório completo"],
+  evitar:["Temas com muitas variáveis ou nuances","Quando há exigência de detalhamento formal"],
+  estrutura:["h|Título + pergunta central","kpi:3|Os 3 números que contam a história","split:chart-bar+bullets-4|Gráfico principal · Leitura em tópicos","callout|Conclusão e próximo passo"],
+  pedidos:["Faça um one-page report com os resultados da semana","Condense esta análise em uma página para eu levar na reunião","Monte uma página única comparando meta x realizado por regional"],
+  dica:"Diga à IA o que <b>pode ser cortado</b>. Sem isso, ela tenta encaixar tudo e a página vira um muro de texto.",
+  prompt:`Crie um ONE-PAGE REPORT (cabe em uma única página A4) sobre [TEMA], para [PÚBLICO].
+Período: [PERÍODO]
+
+Estrutura:
+1. Título + a pergunta central que o relatório responde.
+2. Os 3 números mais importantes, cada um com uma legenda de no máximo 8 palavras.
+3. Um único gráfico (indique tipo e eixos) + 3 a 4 tópicos de leitura.
+4. Conclusão em 2 linhas e o próximo passo recomendado.
+
+Regras:
+- Limite rígido: o conteúdo inteiro deve caber em uma página. Priorize; corte o que for secundário.
+- Nada de parágrafos com mais de 3 linhas.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados:
+[DADOS]`
+},
+{
+  id:"storytelling", nome:"Data Storytelling", pt:"Narrativa com Dados", cat:"Analítico",
+  obj:["explicar","decidir"],
+  tag:"Os dados contados como história: contexto, conflito e resolução. Cada gráfico existe para provar um ponto.",
+  publico:"Qualquer público não técnico", tamanho:"5–10 slides ou 2–3 páginas", tom:"Narrativo e persuasivo",
+  carac:["Títulos são conclusões, não descrições (“Vendas caíram 12% no Sul”)","Arco narrativo: situação → complicação → resolução","Gráficos anotados, destacando só o que importa","Uma mensagem principal por seção"],
+  usar:["Convencer alguém a mudar uma decisão","Apresentar um insight que contraria o senso comum","Explicar uma análise para públicos não técnicos"],
+  evitar:["Acompanhamento de rotina (use dashboard)","Quando o leitor quer só os números brutos"],
+  estrutura:["h|Título-conclusão (a mensagem principal)","text:2|Contexto: como as coisas eram","chart:line|Ponto de virada — gráfico anotado","callout|O insight: o “aha” da análise","chart:bar|Evidência de suporte","bullets:3|Chamada para ação"],
+  pedidos:["Transforme esta análise em uma narrativa com dados para convencer a diretoria","Reescreva os títulos dos meus slides como conclusões","Conte a história de por que a produtividade caiu no 2º semestre"],
+  dica:"Peça para a IA escrever primeiro só os <b>títulos-conclusão</b> em sequência. Se eles contam a história sozinhos, a estrutura está certa.",
+  prompt:`Atue como especialista em data storytelling. Transforme os dados abaixo em uma NARRATIVA COM DADOS sobre [TEMA], para [PÚBLICO].
+Período: [PERÍODO]
+
+Estrutura narrativa:
+1. Título-conclusão: a mensagem principal em uma frase afirmativa.
+2. Contexto: como a situação era (2–3 frases).
+3. Complicação / ponto de virada: o que mudou, com o gráfico que prova isso. Indique o tipo de gráfico e o ponto que deve ser destacado/anotado.
+4. Insight: a explicação do porquê — a descoberta central.
+5. Evidência de suporte: 1 gráfico ou dado adicional que reforça o insight.
+6. Resolução: o que fazer agora (até 3 ações).
+
+Regras:
+- Todo título de seção deve ser uma conclusão, nunca uma descrição ("Inadimplência dobrou no Nordeste", não "Inadimplência por região").
+- Uma única mensagem por seção. Elimine gráficos que não sustentam a história.
+- Diferencie fato de hipótese. Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados:
+[DADOS]`
+},
+{
+  id:"financial", nome:"Financial Report", pt:"Relatório Financeiro", cat:"Financeiro",
+  obj:["prestar contas","acompanhar"],
+  tag:"Resultado econômico-financeiro com rigor: real vs orçado, variações explicadas e premissas explícitas.",
+  publico:"Diretoria, controladoria, finanças", tamanho:"3–8 páginas", tom:"Formal e preciso",
+  carac:["DRE resumida com Real × Orçado × Variação (R$ e %)","Ponte de resultado (waterfall) explicando a variação","Fluxo de caixa e indicadores de margem","Notas com premissas e critérios contábeis"],
+  usar:["Fechamento mensal, trimestral ou anual","Análise de rentabilidade de produto, canal ou unidade","Prestação de contas para investidores ou comitês"],
+  evitar:["Público sem familiaridade com finanças (use executive report)","Quando os dados ainda não estão conciliados"],
+  estrutura:["h|Título, período e base contábil","kpi:4|Receita · Margem · EBITDA/Resultado · Caixa","table:5|DRE resumida: Real × Orçado × Var. R$ × Var. %","chart:waterfall|Ponte de resultado (orçado → real)","split:chart-line+text-3|Fluxo de caixa · Comentário da gestão","bullets:3|Notas, premissas e eventos não recorrentes"],
+  pedidos:["Monte um relatório financeiro do mês com DRE e comentário das variações","Explique a variação entre orçado e realizado em formato de waterfall","Crie a análise de rentabilidade por canal de atendimento"],
+  dica:"Peça para a IA <b>mostrar o cálculo</b> de cada variação. Assim você confere rapidamente se não houve erro aritmético.",
+  prompt:`Atue como analista de controladoria. Elabore um RELATÓRIO FINANCEIRO sobre [TEMA], para [PÚBLICO].
+Período: [PERÍODO]
+
+Estrutura:
+1. Destaques financeiros: Receita, Margem, Resultado (EBITDA ou lucro) e Caixa — valor, orçado e variação.
+2. DRE resumida em tabela: linhas principais × colunas Real | Orçado | Var. R$ | Var. %.
+3. Ponte de resultado (waterfall): do resultado orçado ao realizado, listando cada fator de variação com valor.
+4. Fluxo de caixa: entradas, saídas e saldo, com comentário.
+5. Comentário da gestão: 3 a 5 explicações para as principais variações.
+6. Notas: premissas, critérios e eventos não recorrentes.
+
+Regras:
+- Valores em R$, separador de milhar com ponto e duas casas decimais quando aplicável.
+- Mostre o cálculo das variações (Var. % = (Real − Orçado) / Orçado).
+- Separe efeitos recorrentes de não recorrentes.
+- Não invente valores. Se algum dado estiver faltando, sinalize.
+
+Dados:
+[DADOS]`
+},
+{
+  id:"dashboard", nome:"KPI Dashboard Report", pt:"Painel de Indicadores", cat:"Operacional",
+  obj:["acompanhar"],
+  tag:"Visão panorâmica de indicadores, lida por varredura. Ideal para rotina de acompanhamento recorrente.",
+  publico:"Gestores e times operacionais", tamanho:"1 tela / 1–2 páginas", tom:"Visual, mínimo de texto",
+  carac:["Cartões de KPI no topo com semáforo","Grade de gráficos, cada um respondendo uma pergunta","Filtros e período sempre visíveis","Pouquíssimo texto — o visual fala"],
+  usar:["Acompanhamento diário, semanal ou mensal","Monitorar metas de times e unidades","Quando o mesmo relatório se repete com dados novos"],
+  evitar:["Explicar causas ou convencer (use storytelling)","Público que não conhece os indicadores"],
+  estrutura:["h|Título + filtros e período","kpi:5|Cartões de KPI com meta e semáforo","split:chart-line+chart-pie|Evolução no tempo · Composição","split:chart-bar+table-4|Ranking por unidade · Tabela de detalhe"],
+  pedidos:["Crie um dashboard em HTML com os KPIs desta planilha","Quais indicadores eu deveria acompanhar para a rede de correspondentes?","Monte um painel semanal com transações, ativação e receita por região"],
+  dica:"Peça para a IA gerar o painel como <b>HTML único com Chart.js</b> — você abre direto no navegador e reaproveita todo mês trocando os dados.",
+  prompt:`Crie um PAINEL DE INDICADORES (dashboard) sobre [TEMA], para [PÚBLICO].
+Período: [PERÍODO]
+
+Estrutura:
+1. Cabeçalho com título, período e filtros aplicados.
+2. 4 a 6 cartões de KPI: valor, meta, variação vs período anterior e semáforo (verde ≥ meta, amarelo até 5% abaixo, vermelho > 5% abaixo).
+3. Gráfico de evolução no tempo do indicador principal.
+4. Gráfico de composição (participação por categoria).
+5. Ranking por unidade/região em barras horizontais.
+6. Tabela de detalhe com as principais linhas.
+
+Regras:
+- Cada gráfico deve responder a uma pergunta explícita (escreva a pergunta como subtítulo).
+- Texto mínimo: no máximo uma linha de leitura por gráfico.
+- Use cores consistentes: a mesma categoria sempre com a mesma cor.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados:
+[DADOS]`
+},
+{
+  id:"flash", nome:"Flash Report", pt:"Relatório Flash (diário/semanal)", cat:"Operacional",
+  obj:["acompanhar"],
+  tag:"Boletim curtíssimo de status. Lido em 1 minuto, geralmente no celular, no começo do dia.",
+  publico:"Gestores e equipe", tamanho:"Meia página / 1 mensagem", tom:"Telegráfico",
+  carac:["Status em semáforo (verde, amarelo, vermelho)","Só o que mudou desde o último envio","Ocorrências e ações do dia","Formato que cabe em e-mail ou WhatsApp"],
+  usar:["Rotina diária ou semanal da operação","Durante crises, para atualizações frequentes","Acompanhamento de campanha ou mutirão"],
+  evitar:["Análises de causa ou tendência","Comunicação para diretoria sem contexto prévio"],
+  estrutura:["h|Título + data/hora","rag:4|Status por frente (semáforo)","kpi:3|Números do dia vs meta","bullets:3|Ocorrências relevantes","callout|Ação para hoje"],
+  pedidos:["Transforme estes números de ontem em um flash report para o grupo do time","Crie um modelo de boletim diário de operação em formato WhatsApp","Resuma o status da semana em 5 linhas com semáforo"],
+  dica:"Peça o formato de <b>mensagem de WhatsApp/Teams</b> (com emojis de semáforo) se for enviar por chat — o layout muda bastante.",
+  prompt:`Crie um FLASH REPORT (boletim curto) sobre [TEMA], para [PÚBLICO].
+Referência: [PERÍODO]
+
+Estrutura:
+1. Título com data.
+2. Status por frente em semáforo (🟢 🟡 🔴) — uma linha cada, com o motivo em até 8 palavras.
+3. 3 números do período vs meta.
+4. Ocorrências relevantes (máx. 3).
+5. Ação prioritária para hoje/esta semana, com responsável.
+
+Regras:
+- Deve ser lido em menos de 1 minuto. Máximo de 12 linhas no total.
+- Mostre só o que mudou ou exige atenção; omita o que está normal.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados:
+[DADOS]`
+},
+{
+  id:"status", nome:"Project Status Report", pt:"Status de Projeto", cat:"Projetos",
+  obj:["acompanhar","prestar contas"],
+  tag:"Onde o projeto está, o que vem a seguir e o que está travando. Escopo, prazo e custo em um olhar.",
+  publico:"Patrocinador, PMO, stakeholders", tamanho:"1–2 páginas", tom:"Objetivo",
+  carac:["Semáforo de Escopo, Prazo e Custo","Linha do tempo com marcos concluídos e próximos","Feito no período × Próximos passos","Tabela RAID: riscos, ações, problemas, decisões"],
+  usar:["Reuniões de acompanhamento de projeto","Report semanal ou quinzenal ao patrocinador","Projetos de implantação, sistemas, migração"],
+  evitar:["Rotinas operacionais contínuas (use dashboard)","Quando não há cronograma definido"],
+  estrutura:["h|Projeto, período e gerente","rag:3|Escopo · Prazo · Custo","timeline:6|Marcos (concluídos e próximos)","split:bullets-3+bullets-3|Feito no período · Próximos passos","table:3|Riscos, impedimentos e decisões pendentes (RAID)"],
+  pedidos:["Monte o status report do projeto de automação com base nestas anotações","Converta minha lista de tarefas em um status report com semáforo","Crie um modelo de status report quinzenal para o patrocinador"],
+  dica:"Cole suas anotações soltas da semana e peça para a IA <b>classificar em Feito / Próximo / Risco</b>. Economiza muito tempo.",
+  prompt:`Atue como gerente de projetos. Elabore um STATUS REPORT do projeto [TEMA], para [PÚBLICO].
+Período: [PERÍODO]
+
+Estrutura:
+1. Cabeçalho: projeto, período, gerente, % de conclusão geral.
+2. Semáforo de Escopo, Prazo e Custo — cada um com justificativa de 1 linha.
+3. Linha do tempo de marcos: concluídos (com data real) e próximos (com data prevista).
+4. Realizado no período (até 5 itens) e próximos passos (até 5 itens, com responsável e data).
+5. Tabela RAID: Riscos, Ações, Problemas (issues) e Decisões pendentes — com impacto, responsável e prazo.
+6. Pedidos de apoio ao patrocinador (se houver).
+
+Regras:
+- Semáforo honesto: amarelo/vermelho sempre acompanhado de plano de recuperação.
+- Sem texto corrido: tópicos e tabelas.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados / anotações:
+[DADOS]`
+},
+{
+  id:"qbr", nome:"QBR", pt:"Revisão Trimestral de Negócio", cat:"Estratégico",
+  obj:["prestar contas","decidir"],
+  tag:"Quarterly Business Review: o que entregamos no trimestre, o que aprendemos e o plano para o próximo.",
+  publico:"Liderança, parceiros, clientes-chave", tamanho:"10–15 slides", tom:"Executivo e reflexivo",
+  carac:["Real × meta do trimestre","O que funcionou e o que não funcionou (com aprendizados)","Plano e metas do próximo trimestre","Pedidos de apoio ou recursos"],
+  usar:["Fechamento trimestral de área ou unidade","Revisão com parceiro ou cliente estratégico","Ciclos de planejamento (OKRs)"],
+  evitar:["Acompanhamento semanal (é pesado demais)","Sem metas trimestrais definidas"],
+  estrutura:["h|Trimestre, área e responsáveis","kpi:4|Resultados do trimestre vs meta","chart:bar|Real × meta por mês ou frente","split:bullets-3+bullets-3|O que funcionou · O que não funcionou","table:3|Metas e iniciativas do próximo trimestre","callout|Pedidos de apoio e decisões"],
+  pedidos:["Monte a estrutura de um QBR em 12 slides com estes resultados","Escreva a seção de aprendizados do trimestre","Transforme meus OKRs do trimestre em um QBR"],
+  dica:"Peça para a IA ser <b>autocrítica</b> na seção “o que não funcionou” — por padrão ela tende a suavizar os resultados ruins.",
+  prompt:`Prepare uma QBR (Quarterly Business Review) sobre [TEMA], para [PÚBLICO].
+Trimestre: [PERÍODO]
+
+Estrutura (1 seção = 1 slide ou bloco):
+1. Agenda e objetivos do trimestre.
+2. Resultados vs meta: 4 a 6 indicadores com % de atingimento.
+3. Evolução mês a mês do indicador principal.
+4. O que funcionou (até 3) — com evidência.
+5. O que não funcionou (até 3) — com causa e aprendizado. Seja autocrítico; não suavize.
+6. Metas e iniciativas do próximo trimestre, com responsável.
+7. Riscos para o próximo trimestre.
+8. Pedidos de apoio, recursos ou decisões.
+
+Regras:
+- Títulos de cada seção como conclusões.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados:
+[DADOS]`
+},
+{
+  id:"rca", nome:"Root Cause Analysis", pt:"Análise de Causa Raiz", cat:"Analítico",
+  obj:["investigar","explicar"],
+  tag:"Por que o problema aconteceu — de verdade. Vai do sintoma à causa raiz e termina em plano de ação.",
+  publico:"Gestores, qualidade, operação", tamanho:"2–5 páginas", tom:"Investigativo e factual",
+  carac:["Definição precisa do problema (o quê, onde, quando, quanto)","Técnicas: 5 Porquês, Ishikawa, Pareto","Separa causa raiz de sintoma e de causa contribuinte","Plano de ação 5W2H"],
+  usar:["Queda de indicador sem explicação clara","Reclamações ou falhas recorrentes","Depois de um incidente, para evitar repetição"],
+  evitar:["Quando ainda não se sabe qual é o problema","Para atribuir culpa a pessoas"],
+  estrutura:["h|Problema em uma frase","text:3|Descrição: o quê, onde, quando, impacto","funnel:5|5 Porquês: do sintoma à causa raiz","chart:pareto|Pareto das causas","table:4|Plano de ação 5W2H"],
+  pedidos:["Faça uma análise de causa raiz da queda de transações em agosto","Aplique os 5 porquês a este problema","Monte um Ishikawa com as possíveis causas do aumento de reclamações"],
+  dica:"Peça para a IA marcar cada causa como <b>confirmada pelos dados</b> ou <b>hipótese</b>. Evita tratar suposição como fato.",
+  prompt:`Atue como especialista em melhoria contínua. Conduza uma ANÁLISE DE CAUSA RAIZ sobre [TEMA], para [PÚBLICO].
+Período de ocorrência: [PERÍODO]
+
+Estrutura:
+1. Definição do problema: o quê, onde, quando, com que frequência e qual o impacto (quantificado).
+2. Ishikawa (6M): possíveis causas agrupadas em Método, Máquina, Mão de obra, Material, Medição e Meio ambiente.
+3. 5 Porquês aplicado às causas mais prováveis.
+4. Pareto: quais causas explicam ~80% do problema (se houver dados).
+5. Causa(s) raiz identificada(s) — marque cada uma como CONFIRMADA PELOS DADOS ou HIPÓTESE A VALIDAR.
+6. Plano de ação 5W2H (o quê, por quê, onde, quando, quem, como, quanto custa).
+7. Indicador para verificar se a ação funcionou.
+
+Regras:
+- Diferencie sintoma, causa contribuinte e causa raiz.
+- Foco em processos, não em culpados.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados / contexto:
+[DADOS]`
+},
+{
+  id:"benchmark", nome:"Comparative / Benchmark", pt:"Comparativo / Benchmark", cat:"Analítico",
+  obj:["comparar","decidir"],
+  tag:"Coloca opções lado a lado com critérios ponderados e termina em uma recomendação clara.",
+  publico:"Tomadores de decisão", tamanho:"2–4 páginas", tom:"Imparcial e estruturado",
+  carac:["Critérios definidos antes da comparação","Matriz de decisão com pesos e notas","Prós e contras de cada opção","Recomendação explícita e justificada"],
+  usar:["Escolher fornecedor, ferramenta ou parceiro","Comparar regiões, unidades ou períodos","Benchmark contra concorrência ou mercado"],
+  evitar:["Quando há só uma opção real","Critérios subjetivos sem acordo prévio"],
+  estrutura:["h|O que está sendo comparado e por quê","table:5|Matriz: critérios × opções (com pesos)","chart:bar|Score ponderado final","split:bullets-3+bullets-3|Prós · Contras de cada opção","callout|Recomendação e condições"],
+  pedidos:["Compare estas 3 ferramentas de BI com uma matriz de decisão","Faça um benchmark de desempenho entre as regionais","Compare nosso produto com os 2 principais concorrentes"],
+  dica:"Defina você mesma os <b>pesos dos critérios</b>. Se deixar a IA escolher, ela pode, sem querer, favorecer a opção que parece melhor.",
+  prompt:`Elabore um RELATÓRIO COMPARATIVO (benchmark) sobre [TEMA], para [PÚBLICO].
+Período/referência: [PERÍODO]
+
+Estrutura:
+1. Objetivo da comparação e opções avaliadas.
+2. Critérios de avaliação com pesos (somando 100%). Se eu não informar os pesos, proponha e justifique.
+3. Matriz de decisão: opções × critérios, nota de 1 a 5 e justificativa curta de cada nota.
+4. Score ponderado final de cada opção.
+5. Prós e contras de cada opção (até 3 cada).
+6. Recomendação: opção escolhida, condições e riscos.
+7. Análise de sensibilidade: a recomendação muda se os pesos mudarem?
+
+Regras:
+- Seja imparcial; aponte limitações da opção recomendada.
+- Diferencie dados objetivos de avaliação subjetiva.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados:
+[DADOS]`
+},
+{
+  id:"swot", nome:"SWOT Analysis", pt:"Análise SWOT (FOFA)", cat:"Estratégico",
+  obj:["decidir","explicar"],
+  tag:"Forças, Fraquezas, Oportunidades e Ameaças — e, mais importante, o que fazer com os cruzamentos.",
+  publico:"Liderança e planejamento", tamanho:"1–3 páginas", tom:"Estratégico",
+  carac:["Matriz 2×2: interno (forças/fraquezas) × externo (oportunidades/ameaças)","Itens específicos e evidenciados, não genéricos","Matriz TOWS: estratégias de cruzamento","Prioridades estratégicas ao final"],
+  usar:["Planejamento estratégico anual","Avaliar entrada em novo mercado ou produto","Diagnóstico de uma área ou unidade"],
+  evitar:["Decisões operacionais do dia a dia","Quando sai só uma lista sem estratégia"],
+  estrutura:["h|Objeto da análise e escopo","matrix|Forças · Fraquezas · Oportunidades · Ameaças","table:4|Cruzamentos TOWS (SO, ST, WO, WT)","callout|Prioridades estratégicas"],
+  pedidos:["Faça uma SWOT da nossa rede de correspondentes em cidades pequenas","Transforme esta SWOT em estratégias TOWS","Avalie a entrada em um novo segmento com análise SWOT"],
+  dica:"Uma SWOT sem cruzamento é só uma lista. Sempre peça a <b>matriz TOWS</b> e as prioridades.",
+  prompt:`Atue como consultor de estratégia. Faça uma ANÁLISE SWOT (FOFA) sobre [TEMA], para [PÚBLICO].
+Referência: [PERÍODO]
+
+Estrutura:
+1. Escopo: o que está sendo analisado e em qual contexto.
+2. Matriz SWOT: 3 a 5 itens em cada quadrante — Forças e Fraquezas (fatores internos), Oportunidades e Ameaças (fatores externos). Cada item com uma evidência ou dado.
+3. Matriz TOWS:
+   - SO: usar forças para aproveitar oportunidades
+   - ST: usar forças para reduzir ameaças
+   - WO: corrigir fraquezas aproveitando oportunidades
+   - WT: minimizar fraquezas e evitar ameaças
+4. 3 prioridades estratégicas, com justificativa.
+
+Regras:
+- Itens específicos e verificáveis; evite generalidades como "boa equipe".
+- Não confunda fatores internos com externos.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados / contexto:
+[DADOS]`
+},
+{
+  id:"businesscase", nome:"Business Case", pt:"Caso de Negócio", cat:"Estratégico",
+  obj:["decidir"],
+  tag:"Argumento estruturado para aprovar um investimento ou iniciativa: problema, solução, custo, retorno e risco.",
+  publico:"Comitês, diretoria, patrocinadores", tamanho:"3–6 páginas ou 8–12 slides", tom:"Persuasivo e fundamentado",
+  carac:["Problema ou oportunidade quantificados","Alternativas consideradas (incluindo não fazer nada)","Investimento, ROI, payback e cenários","Riscos e decisão solicitada explícita"],
+  usar:["Pedir orçamento para projeto ou ferramenta","Propor nova iniciativa (ex.: automação com IA)","Justificar contratação ou mudança de processo"],
+  evitar:["Iniciativas pequenas que não exigem aprovação","Quando custos e benefícios não podem ser estimados"],
+  estrutura:["h|Iniciativa proposta","callout|Problema/oportunidade quantificado","split:text-3+kpi-2|Solução proposta · Investimento e retorno","chart:line|Payback / fluxo acumulado","table:3|Cenários: pessimista · base · otimista","bullets:3|Riscos e mitigação","callout|Decisão solicitada"],
+  pedidos:["Monte um business case para automatizar a triagem de e-mails com IA","Calcule ROI e payback desta iniciativa em 3 cenários","Escreva a justificativa para contratar mais 2 consultores"],
+  dica:"Peça que a IA inclua a alternativa <b>“não fazer nada”</b> e o custo dela — é o argumento mais forte para aprovação.",
+  prompt:`Atue como consultor de negócios. Elabore um BUSINESS CASE para [TEMA], destinado a [PÚBLICO].
+Horizonte de análise: [PERÍODO]
+
+Estrutura:
+1. Sumário executivo: o que se propõe, quanto custa, quanto retorna e qual decisão é pedida.
+2. Problema ou oportunidade, quantificado (horas, R$, volume, risco).
+3. Alternativas: (a) não fazer nada, (b) solução proposta, (c) outra alternativa viável.
+4. Solução proposta: escopo, etapas e prazo.
+5. Investimento (CAPEX/OPEX) e benefícios esperados.
+6. Indicadores financeiros: ROI, payback e, se possível, VPL — em 3 cenários (pessimista, base, otimista). Liste as premissas.
+7. Riscos e mitigação.
+8. Decisão solicitada e próximos passos.
+
+Regras:
+- Premissas explícitas; mostre os cálculos.
+- Não superestime benefícios; sinalize o que é estimativa.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados:
+[DADOS]`
+},
+{
+  id:"incident", nome:"Incident Post-mortem", pt:"Relatório de Incidente", cat:"Operacional",
+  obj:["investigar","prestar contas"],
+  tag:"O registro de um incidente: o que aconteceu, minuto a minuto, impacto, causa e o que muda para não repetir.",
+  publico:"Gestão, TI, risco, operação", tamanho:"2–4 páginas", tom:"Factual e sem culpados (blameless)",
+  carac:["Severidade e impacto quantificados","Linha do tempo detalhada (detecção → resolução)","Causa raiz e fatores contribuintes","Ações corretivas e preventivas com dono"],
+  usar:["Falha de sistema, fraude, erro operacional relevante","Indisponibilidade de serviço ou canal","Exigência de registro formal para risco/compliance"],
+  evitar:["Pequenos erros pontuais sem impacto","Como ferramenta de punição"],
+  estrutura:["h|Incidente, severidade e status","kpi:3|Duração · Clientes/unidades afetados · Impacto R$","timeline:6|Linha do tempo: detecção → contenção → resolução","text:3|Causa raiz e fatores contribuintes","table:3|Ações corretivas e preventivas (dono, prazo)"],
+  pedidos:["Escreva o post-mortem da indisponibilidade de ontem com base neste log","Monte a linha do tempo do incidente a partir destas mensagens","Crie um modelo padrão de relatório de incidente operacional"],
+  dica:"Cole as mensagens/e-mails trocados durante o incidente e peça para a IA <b>reconstruir a linha do tempo</b> com horários.",
+  prompt:`Elabore um RELATÓRIO DE INCIDENTE (post-mortem) sobre [TEMA], para [PÚBLICO].
+Data/período do incidente: [PERÍODO]
+
+Estrutura:
+1. Resumo: o que aconteceu, severidade (crítica/alta/média/baixa) e status atual.
+2. Impacto: duração, clientes/unidades afetados, transações perdidas, impacto financeiro estimado.
+3. Linha do tempo com horários: início, detecção, escalonamento, contenção, resolução, comunicação.
+4. Causa raiz e fatores contribuintes.
+5. O que funcionou bem na resposta e o que não funcionou.
+6. Ações corretivas (resolver) e preventivas (evitar repetição), com responsável e prazo.
+7. Lições aprendidas.
+
+Regras:
+- Abordagem sem culpados (blameless): foco em processos e sistemas, não em pessoas.
+- Fatos com horário; hipóteses marcadas como tal.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados / log / mensagens:
+[DADOS]`
+},
+{
+  id:"risk", nome:"Risk Report", pt:"Relatório de Riscos", cat:"Risco & Compliance",
+  obj:["acompanhar","prestar contas"],
+  tag:"Mapeia, prioriza e acompanha riscos: probabilidade × impacto, exposição e plano de mitigação.",
+  publico:"Comitê de riscos, diretoria, compliance", tamanho:"2–5 páginas", tom:"Técnico e prudente",
+  carac:["Mapa de calor probabilidade × impacto","Registro de riscos com dono e nível","Exposição total e evolução","Limites, gatilhos e planos de mitigação"],
+  usar:["Comitês periódicos de risco","Acompanhar exposição de crédito ou limite de parceiros","Avaliar riscos de um projeto ou mudança"],
+  evitar:["Sem critérios definidos de probabilidade e impacto","Como lista única sem priorização"],
+  estrutura:["h|Escopo e data-base","kpi:3|Exposição total · Riscos críticos · Fora do limite","heat|Mapa de calor: probabilidade × impacto","table:4|Registro de riscos (nível, dono, tendência)","bullets:3|Mitigações e gatilhos de ação"],
+  pedidos:["Monte um relatório de risco da carteira de correspondentes por faixa de limite","Classifique estes riscos em uma matriz probabilidade × impacto","Crie o registro de riscos do projeto de migração"],
+  dica:"Informe a <b>escala</b> de probabilidade e impacto (ex.: 1 a 5) e o que cada nível significa. Senão, cada execução classifica diferente.",
+  prompt:`Atue como analista de riscos. Elabore um RELATÓRIO DE RISCOS sobre [TEMA], para [PÚBLICO].
+Data-base: [PERÍODO]
+
+Estrutura:
+1. Escopo e metodologia: escala de probabilidade (1–5) e impacto (1–5), e o que cada nível significa.
+2. Indicadores: exposição total, número de riscos críticos, itens acima do limite/apetite.
+3. Mapa de calor probabilidade × impacto, posicionando cada risco.
+4. Registro de riscos (tabela): ID, descrição, causa, probabilidade, impacto, nível, responsável, tendência (↑ ↓ →).
+5. Top 5 riscos com plano de mitigação e gatilho de ação (quando escalar).
+6. Mudanças em relação ao período anterior.
+
+Regras:
+- Classificação consistente com a escala definida.
+- Linguagem prudente; não minimize riscos.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados:
+[DADOS]`
+},
+{
+  id:"forecast", nome:"Forecast & Trends", pt:"Projeção e Tendências", cat:"Analítico",
+  obj:["prever","decidir"],
+  tag:"Olha para frente: histórico, tendência, projeção com faixa de incerteza e os sinais que mudariam o cenário.",
+  publico:"Planejamento, diretoria, finanças", tamanho:"2–4 páginas", tom:"Analítico e cauteloso",
+  carac:["Histórico + projeção no mesmo gráfico","Faixa de incerteza e cenários","Premissas explícitas","Sinais de alerta (leading indicators)"],
+  usar:["Orçamento e definição de metas","Planejamento de capacidade ou de expansão","Antecipar sazonalidade"],
+  evitar:["Séries muito curtas (menos de ~12 pontos)","Quando houve ruptura recente sem explicação"],
+  estrutura:["h|Indicador projetado e horizonte","chart:forecast|Histórico + projeção com faixa","kpi:3|Cenário pessimista · base · otimista","text:3|Premissas e método","bullets:3|Sinais de alerta a monitorar"],
+  pedidos:["Projete o volume de transações para os próximos 6 meses","Identifique a sazonalidade nesta série histórica","Crie 3 cenários de meta para o ano que vem"],
+  dica:"IA conversacional não é modelo estatístico. Para números sérios, peça que ela <b>gere o código Python</b> da projeção e rode você mesma.",
+  prompt:`Atue como analista de planejamento. Elabore um RELATÓRIO DE PROJEÇÃO E TENDÊNCIAS sobre [TEMA], para [PÚBLICO].
+Horizonte da projeção: [PERÍODO]
+
+Estrutura:
+1. Indicador projetado, horizonte e método utilizado (explique de forma simples).
+2. Análise do histórico: tendência, sazonalidade, outliers.
+3. Projeção com 3 cenários (pessimista, base, otimista) e faixa de incerteza.
+4. Premissas de cada cenário.
+5. Sinais de alerta (indicadores antecedentes) que indicariam mudança de cenário.
+6. Implicações e recomendações.
+
+Regras:
+- Deixe claro o grau de confiança; não apresente projeção como certeza.
+- Se a série for curta ou instável, avise sobre a limitação.
+- Se for possível, forneça também o código Python usado na projeção.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados (série histórica):
+[DADOS]`
+},
+{
+  id:"audit", nome:"Audit & Compliance Report", pt:"Auditoria e Conformidade", cat:"Risco & Compliance",
+  obj:["prestar contas","investigar"],
+  tag:"Verifica se processos seguem regras e normas. Cada achado com critério, evidência, risco e recomendação.",
+  publico:"Auditoria, compliance, comitês", tamanho:"3–10 páginas", tom:"Formal e rastreável",
+  carac:["Escopo, critérios e amostra definidos","Achados no formato Condição × Critério × Causa × Efeito","Classificação por risco","Plano de regularização com prazo"],
+  usar:["Auditorias internas e checagens de conformidade","Verificação de parceiros e correspondentes","Preparação para auditoria externa ou regulador"],
+  evitar:["Sem critério normativo de referência","Conclusões sem evidência"],
+  estrutura:["h|Escopo, critérios e período","kpi:3|Itens verificados · Conformes · Não conformes","gauge|Índice de conformidade","table:5|Achados: condição, critério, evidência, risco, recomendação","bullets:3|Plano de regularização"],
+  pedidos:["Monte um relatório de conformidade a partir desta checklist de visitas","Organize estes achados no formato condição/critério/causa/efeito","Crie um modelo de relatório de auditoria de correspondentes"],
+  dica:"Peça que cada achado cite a <b>evidência e o critério</b> (norma, política, contrato). Achado sem evidência não se sustenta.",
+  prompt:`Atue como auditor interno. Elabore um RELATÓRIO DE AUDITORIA E CONFORMIDADE sobre [TEMA], para [PÚBLICO].
+Período auditado: [PERÍODO]
+
+Estrutura:
+1. Escopo, objetivo, critérios de referência (normas, políticas, contratos) e amostra.
+2. Resumo: itens verificados, conformes, não conformes e índice de conformidade (%).
+3. Achados — para cada um:
+   - Condição (o que foi encontrado)
+   - Critério (o que deveria ser)
+   - Causa
+   - Efeito / risco (alto, médio, baixo)
+   - Evidência
+   - Recomendação
+4. Conclusão geral.
+5. Plano de regularização: ação, responsável, prazo.
+
+Regras:
+- Linguagem formal e objetiva; todo achado precisa de evidência.
+- Não emita conclusões além do escopo verificado.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados / checklist:
+[DADOS]`
+},
+{
+  id:"scorecard", nome:"Scorecard & Ranking", pt:"Scorecard e Ranking", cat:"Operacional",
+  obj:["comparar","acompanhar"],
+  tag:"Classifica unidades, pessoas ou parceiros por um score composto. Mostra quem está no topo, quem precisa de ação.",
+  publico:"Gestores, times comerciais", tamanho:"1–3 páginas", tom:"Objetivo e motivador",
+  carac:["Score composto de vários indicadores com pesos","Ranking com posição, score e tendência","Distribuição por faixas (A/B/C/D)","Top e bottom performers com ação sugerida"],
+  usar:["Avaliar performance de correspondentes, lojas, regiões","Definir quem recebe ação (visita, retirada de equipamento, incentivo)","Campanhas de incentivo"],
+  evitar:["Indicadores com bases muito diferentes sem normalizar","Quando o ranking pode expor pessoas indevidamente"],
+  estrutura:["h|Critério do score e período","table:6|Ranking: posição, nome, score, tendência","chart:bar|Distribuição por faixa (A/B/C/D)","split:bullets-3+bullets-3|Top performers · Precisam de ação"],
+  pedidos:["Crie um score de performance para os correspondentes com estes indicadores","Classifique as unidades em faixas A, B, C e D","Liste os 20 com pior desempenho e sugira uma ação para cada"],
+  dica:"Peça que a IA <b>normalize</b> os indicadores (0–100) antes de somar — senão o indicador com números maiores domina o score.",
+  prompt:`Elabore um SCORECARD E RANKING sobre [TEMA], para [PÚBLICO].
+Período: [PERÍODO]
+
+Estrutura:
+1. Metodologia do score: indicadores usados, pesos e forma de normalização (0–100).
+2. Ranking completo (tabela): posição, nome/código, score, indicadores principais, tendência vs período anterior (↑ ↓ →).
+3. Distribuição por faixas: A (≥ 80), B (60–79), C (40–59), D (< 40) — quantidade e %.
+4. Top 10: o que têm em comum.
+5. Bottom 10: principal fator do baixo score e ação sugerida para cada.
+
+Regras:
+- Normalize os indicadores antes de ponderar.
+- Explique em 1 linha por que cada item do bottom está lá.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados:
+[DADOS]`
+},
+{
+  id:"funnel", nome:"Funnel / Conversion Report", pt:"Funil e Conversão", cat:"Analítico",
+  obj:["investigar","acompanhar"],
+  tag:"Mostra onde as oportunidades se perdem entre etapas — de prospecção a ativação — e onde atuar.",
+  publico:"Comercial, prospecção, marketing", tamanho:"1–3 páginas", tom:"Analítico e prático",
+  carac:["Etapas do funil com volume e taxa de conversão","Gargalo identificado (maior perda)","Tempo médio entre etapas","Comparação entre segmentos ou equipes"],
+  usar:["Prospecção e credenciamento de novos parceiros","Jornada de ativação de clientes","Campanhas comerciais"],
+  evitar:["Processos sem etapas claras","Quando os dados de etapa não são confiáveis"],
+  estrutura:["h|Funil analisado e período","funnel:5|Etapas: volume e conversão","kpi:3|Conversão total · Maior perda · Tempo médio","table:3|Conversão por segmento/equipe","bullets:3|Ações para o gargalo"],
+  pedidos:["Analise o funil de prospecção de novos correspondentes","Onde estamos perdendo mais oportunidades?","Compare a conversão entre os prospectores"],
+  dica:"Peça a conversão <b>etapa a etapa</b> e também a <b>acumulada</b>. Uma esconde o que a outra mostra.",
+  prompt:`Elabore um RELATÓRIO DE FUNIL E CONVERSÃO sobre [TEMA], para [PÚBLICO].
+Período: [PERÍODO]
+
+Estrutura:
+1. Definição das etapas do funil e critério de passagem entre elas.
+2. Volume por etapa, taxa de conversão etapa a etapa e acumulada.
+3. Gargalo: etapa com maior perda absoluta e relativa.
+4. Tempo médio entre etapas.
+5. Comparação por segmento, região ou equipe.
+6. 3 ações para atacar o gargalo, com impacto estimado.
+
+Regras:
+- Mostre conversão etapa a etapa E acumulada.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados:
+[DADOS]`
+},
+{
+  id:"memo", nome:"Briefing Memo", pt:"Memorando / Briefing", cat:"Executivo",
+  obj:["decidir","explicar"],
+  tag:"Texto curto e estruturado para informar ou pedir uma decisão. Sem gráficos — a força está na clareza da escrita.",
+  publico:"Gestor direto, diretoria", tamanho:"1 página", tom:"Formal e conciso",
+  carac:["Para / De / Data / Assunto","BLUF: conclusão e pedido no primeiro parágrafo","Contexto mínimo necessário","Opções avaliadas e recomendação"],
+  usar:["Pedir aprovação por e-mail","Preparar o chefe para uma reunião","Registrar uma decisão e seu racional"],
+  evitar:["Muitos dados numéricos (use one-page ou executive)","Comunicação informal"],
+  estrutura:["h|Para · De · Data · Assunto","callout|BLUF: conclusão e pedido","text:4|Contexto","bullets:3|Opções consideradas","callout|Recomendação e próximo passo"],
+  pedidos:["Escreva um memo pedindo aprovação para o piloto","Prepare um briefing de 1 página para meu diretor antes da reunião","Registre esta decisão e o racional em formato de memorando"],
+  dica:"Peça que o <b>assunto do e-mail</b> já contenha o pedido (ex.: “Aprovação: piloto de IA até 15/10”).",
+  prompt:`Escreva um MEMORANDO / BRIEFING sobre [TEMA], destinado a [PÚBLICO].
+Referência: [PERÍODO]
+
+Estrutura:
+1. Cabeçalho: Para, De, Data, Assunto (o assunto já deve conter o pedido ou conclusão).
+2. BLUF (primeiro parágrafo, até 3 linhas): a conclusão e o que se pede ao leitor.
+3. Contexto: o mínimo necessário para entender a situação.
+4. Opções consideradas (2 a 3), com vantagens e desvantagens.
+5. Recomendação, prazo para decisão e próximo passo.
+
+Regras:
+- Máximo de 1 página. Parágrafos curtos.
+- Tom formal, sem rodeios.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Informações:
+[DADOS]`
+}
+];
+
+const FORMATOS = {
+  "md":"Entregue em Markdown bem estruturado, com títulos, tabelas e tópicos.",
+  "html":"Entregue como um único arquivo HTML autocontido (CSS inline e gráficos com Chart.js via CDN), com visual profissional, pronto para abrir no navegador e imprimir em PDF.",
+  "slides":"Entregue como roteiro de apresentação: 1 slide por seção, com título-conclusão, conteúdo do slide e sugestão de visual.",
+  "docx":"Entregue como documento Word (.docx) formatado, com títulos, tabelas e paginação.",
+  "xlsx":"Entregue como planilha (.xlsx) com uma aba de dados, uma aba de cálculos com fórmulas e uma aba de resumo.",
+  "email":"Entregue como texto pronto para colar no corpo de um e-mail, com linha de assunto."
+};
+const FORMATO_LABEL = {md:"Markdown",html:"HTML único + gráficos",slides:"Roteiro de slides",docx:"Word (.docx)",xlsx:"Planilha (.xlsx)",email:"Corpo de e-mail"};
+
+const MODS = [
+  {id:"minto",  l:"Pirâmide de Minto",   t:"Organize o raciocínio pela Pirâmide de Minto: conclusão primeiro, depois argumentos de apoio, depois evidências."},
+  {id:"mobile", l:"Leitura no celular",  t:"Otimize para leitura no celular: blocos curtos, sem tabelas largas."},
+  {id:"limit",  l:"Limitações dos dados",t:"Inclua ao final uma seção 'Limitações dos dados e próximos passos de análise'."},
+  {id:"calc",   l:"Mostrar cálculos",    t:"Mostre a fórmula e o cálculo de cada indicador derivado, para conferência."},
+  {id:"perg",   l:"Perguntar antes",     t:"Antes de gerar o relatório, faça até 5 perguntas para esclarecer o que estiver ambíguo. Só gere depois das minhas respostas."},
+  {id:"estrut", l:"Só a estrutura",      t:"Nesta primeira etapa, entregue apenas o esqueleto (títulos das seções e o que cada uma vai conter). Aguarde minha aprovação para escrever o conteúdo."},
+  {id:"anon",   l:"Anonimizar",          t:"Não reproduza nomes, CPFs, CNPJs ou números de conta; use códigos (ex.: Correspondente 01)."},
+  {id:"glos",   l:"Glossário",           t:"Inclua um glossário curto dos termos técnicos e siglas usados."}
+];
+
+const GOALS = {decidir:"Decidir",acompanhar:"Acompanhar","prestar contas":"Prestar contas",explicar:"Explicar",comparar:"Comparar",investigar:"Investigar",prever:"Prever"};
+
+const DECISION = [
+  ["Preciso que a diretoria tome uma decisão","executive"],
+  ["Tenho só 1 página / 2 minutos de atenção","onepage"],
+  ["Quero convencer alguém de um insight","storytelling"],
+  ["Preciso pedir orçamento para um projeto","businesscase"],
+  ["Algo deu errado e preciso entender o porquê","rca"],
+  ["Preciso escolher entre opções","benchmark"],
+  ["Quero acompanhar indicadores toda semana","dashboard"],
+  ["Preciso classificar parceiros por desempenho","scorecard"]
+];
+
+/* ============================================================
+   WIREFRAME RENDERER
+   ============================================================ */
+const lines = (n,ws=[100,92,96,78,88,70]) => Array.from({length:n},(_,i)=>`<i class="ln" style="width:${ws[i%ws.length]}%"></i>`).join("");
+function block(type,arg){
+  const n = parseInt(arg)||3;
+  switch(type){
+    case "h": return `<div class="b-h"><i class="t"></i><i class="m"></i></div>`;
+    case "text": return `<div class="b-text">${lines(n)}</div>`;
+    case "callout": return `<div class="b-callout">${lines(3,[40,95,80])}</div>`;
+    case "bullets": return `<div class="b-bullets">${Array.from({length:n},(_,i)=>`<div class="r"><i></i><i class="ln" style="width:${[90,75,84,68][i%4]}%;flex:none"></i></div>`).join("")}</div>`;
+    case "kpi": return `<div class="b-kpi" style="grid-template-columns:repeat(${n},1fr)">${Array.from({length:n},()=>`<div class="kp"><i class="a"></i><i class="v"></i><i class="d"></i></div>`).join("")}</div>`;
+    case "table": return `<div class="b-table">${Array.from({length:n+1},()=>`<div class="tr"><i></i><i></i><i></i><i></i></div>`).join("")}</div>`;
+    case "rag": {
+      const c=["var(--ok)","var(--warn)","var(--ok)","var(--bad)"];
+      return `<div class="b-rag" style="grid-template-columns:repeat(${Math.min(n,4)},1fr)">${Array.from({length:n},(_,i)=>`<div class="rg"><i style="background:${c[i%4]}"></i><i class="ln"></i></div>`).join("")}</div>`;
+    }
+    case "timeline": return `<div class="b-timeline"><div class="ds">${Array.from({length:n},(_,i)=>`<div class="dt ${i<Math.ceil(n/2)?'done':''}"><i></i><i></i></div>`).join("")}</div></div>`;
+    case "matrix": return `<div class="b-matrix">${["S · Forças","W · Fraquezas","O · Oportunidades","T · Ameaças"].map(x=>`<div class="q"><b>${x}</b>${lines(2,[85,65])}</div>`).join("")}</div>`;
+    case "heat": {
+      let s="";
+      for(let r=0;r<4;r++)for(let c=0;c<4;c++){const v=(3-r)+c;const col=v>=5?"var(--bad)":v>=3?"var(--warn)":"var(--ok)";const op=[.35,.5,.65,.8][Math.min(3,Math.floor(v/2))];s+=`<i style="background:color-mix(in srgb,${col} ${op*100}%,var(--wf-2))"></i>`}
+      return `<div class="b-heat">${s}</div>`;
+    }
+    case "funnel": return `<div class="b-funnel">${Array.from({length:n},(_,i)=>`<i style="width:${100-i*(70/n)}%"></i>`).join("")}</div>`;
+    case "gauge": return `<div class="b-gauge"><svg width="120" height="66" viewBox="0 0 120 66"><path d="M10 60 A50 50 0 0 1 110 60" fill="none" stroke="var(--wf-2)" stroke-width="12" stroke-linecap="round"/><path d="M10 60 A50 50 0 0 1 95 25" fill="none" stroke="var(--wf-acc)" stroke-width="12" stroke-linecap="round"/><rect x="45" y="44" width="30" height="9" rx="3" fill="var(--wf-1)"/></svg></div>`;
+    case "chart": return `<div class="b-chart">${chart(arg)}</div>`;
+    default: return `<div class="b-text">${lines(2)}</div>`;
+  }
+}
+function chart(kind){
+  if(kind==="bar"){const h=[45,62,38,80,70,55,92];return h.map((v,i)=>`<i class="bar ${i===6?'hl':''}" style="height:${v}%"></i>`).join("")}
+  if(kind==="pareto"){const h=[95,70,48,30,18,10,6];return h.map((v,i)=>`<i class="bar ${i<2?'hl':''}" style="height:${v}%"></i>`).join("")}
+  if(kind==="pie")return `<div class="pie"></div>`;
+  if(kind==="waterfall"){
+    const st=[[0,60,"var(--wf-1)"],[60,78,"var(--ok)"],[52,78,"var(--bad)"],[52,70,"var(--ok)"],[62,70,"var(--bad)"],[0,62,"var(--wf-acc)"]];
+    return `<div class="wfall">${st.map(([a,b,c])=>`<span><i style="height:${b-a}%;background:${c}"></i><i style="height:${a}%"></i></span>`).join("")}</div>`;
+  }
+  if(kind==="forecast")return `<svg viewBox="0 0 200 70" preserveAspectRatio="none"><path d="M120 34 L200 8 L200 40 L120 40 Z" fill="var(--wf-acc)" opacity=".15"/><polyline points="0,52 20,48 40,54 60,40 80,44 100,34 120,36" fill="none" stroke="var(--wf-1)" stroke-width="2.5"/><polyline points="120,36 145,30 170,26 200,22" fill="none" stroke="var(--wf-acc)" stroke-width="2.5" stroke-dasharray="5 4"/><line x1="120" y1="0" x2="120" y2="70" stroke="var(--wf-2)" stroke-dasharray="2 3"/></svg>`;
+  // line
+  return `<svg viewBox="0 0 200 70" preserveAspectRatio="none"><polyline points="0,55 30,48 60,52 90,36 120,40 150,22 200,14" fill="none" stroke="var(--wf-1)" stroke-width="2.5"/><polyline points="0,40 200,40" fill="none" stroke="var(--wf-acc)" stroke-width="1.5" stroke-dasharray="4 4"/><circle cx="150" cy="22" r="4" fill="var(--wf-acc)"/></svg>`;
+}
+function wireframe(spec,big){
+  return `<div class="wf ${big?'big':''}">${spec.map((s,i)=>{
+    const [def]=s.split("|");
+    const [type,arg]=def.split(":");
+    if(type==="split"){
+      const parts=arg.split("+").map(p=>{const [t,a]=p.split("-");return `<div class="b">${block(t,a)}</div>`}).join("");
+      return `<div class="b b-split" data-n="${i+1}">${parts}</div>`;
+    }
+    return `<div class="b" data-n="${i+1}">${block(type,arg)}</div>`;
+  }).join("")}</div>`;
+}
+
+
+/* ============================================================
+   ESTILOS VISUAIS
+   ============================================================ */
+const STYLES = {
+  minimal:{n:"Minimalista", d:"Espaço em branco, tipografia limpa e uma única cor de destaque.",
+    traits:["Preto, cinzas e 1 cor de destaque","Sem sombras, bordas ou ícones","Rótulos direto nos dados, sem grade"],
+    ideal:"Diretoria, impressos, one-pages",
+    prompt:"Estilo visual MINIMALISTA: fundo branco, tipografia sans-serif limpa, muito espaço em branco, paleta preto e tons de cinza com UMA única cor de destaque usada apenas no dado mais importante; sem sombras, sem bordas pesadas, sem ícones decorativos; gráficos sem linhas de grade e com rótulos diretos nos dados."},
+  modern:{n:"Moderno", d:"Cartões arredondados, sombras suaves e cores vivas em degradê.",
+    traits:["Cantos arredondados e sombras leves","Índigo/violeta com acento verde-água","Badges em pílula para variações"],
+    ideal:"Dashboards, apresentações internas, produtos digitais",
+    prompt:"Estilo visual MODERNO: cartões com cantos arredondados (12–16px) e sombras suaves, fundo cinza-claro azulado, paleta índigo e violeta com acento verde-água, números grandes em destaque, variações em badges no formato pílula, tipografia sans-serif geométrica e áreas sombreadas sob as linhas dos gráficos."},
+  corporate:{n:"Corporativo", d:"Institucional e sóbrio: faixa azul-marinho, tabelas zebradas, rodapé confidencial.",
+    traits:["Cabeçalho em faixa azul-marinho","Tabelas com cabeçalho escuro e zebra","Paleta sóbria e rodapé institucional"],
+    ideal:"Comitês, relatórios oficiais, áreas de controle",
+    prompt:"Estilo visual CORPORATIVO: faixa de cabeçalho azul-marinho com título em branco, tabelas com cabeçalho escuro e linhas zebradas, bordas finas e cantos retos, paleta sóbria (azul-marinho, azul médio, azul-claro e verde-azulado), rodapé com 'Confidencial · Uso interno'; visual institucional e conservador."},
+  consulting:{n:"Consultoria", d:"Padrão de grandes consultorias: títulos de ação, serifa, fonte citada em cada gráfico.",
+    traits:["Títulos que já dizem a conclusão","Azul-marinho + 1 verde-azulado","Nota de fonte abaixo de cada gráfico"],
+    ideal:"Business cases, recomendações, diretoria",
+    prompt:"Estilo visual CONSULTORIA (padrão de grandes consultorias estratégicas): títulos de ação (uma frase completa com a conclusão), títulos em fonte serifada, paleta azul-marinho com uma única cor de destaque verde-azulada, filetes finos separando os blocos, nota 'Fonte:' abaixo de cada gráfico, nenhum elemento decorativo."},
+  editorial:{n:"Editorial", d:"Como uma revista de negócios: manchetes serifadas, números grandes e citações.",
+    traits:["Títulos grandes em serifa, fundo creme","Números-chave como manchete","Citações em itálico e filetes pretos"],
+    ideal:"Data storytelling, newsletters, relatórios anuais",
+    prompt:"Estilo visual EDITORIAL (revista de negócios): títulos grandes em fonte serifada, fundo creme, cor de destaque vermelho-tijolo, números-chave em tamanho de manchete, citações de destaque (pull quotes) em itálico, filetes pretos grossos separando as seções e ritmo de leitura de matéria."},
+  dark:{n:"Dark / Tech", d:"Fundo escuro, cores neon e números monoespaçados — cara de painel de monitoramento.",
+    traits:["Fundo escuro e cartões grafite","Ciano, violeta, verde e laranja neon","Números em fonte monoespaçada"],
+    ideal:"Monitoramento, TI, telas de operação",
+    prompt:"Estilo visual DARK/TECH: fundo escuro (#0d1117), cartões em cinza-grafite com borda sutil, cores neon nos gráficos (ciano, violeta, verde, laranja), números em fonte monoespaçada com leve brilho nos indicadores principais; aparência de painel de monitoramento."}
+};
+
+/* ============================================================
+   GRÁFICOS (SVG)
+   ============================================================ */
+const F=(v,d=0)=>Number(v).toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const fm=o=>v=>(o.pre||"")+F(v,o.dec||0)+(o.suf||"");
+
+function cBars(o){
+  if(o.horiz)return cBarsH(o);
+  const W=560,H=215,pl=8,pr=8,pt=24,pb=28,n=o.v.length,f=fm(o);
+  const max=Math.max(...o.v,...(o.tg||[0]))*1.12, bw=(W-pl-pr)/n, w=Math.min(bw*.58,64);
+  let s=`<svg viewBox="0 0 ${W} ${H}" class="x-svg"><line x1="${pl}" x2="${W-pr}" y1="${H-pb}" y2="${H-pb}" class="ax"/>`;
+  o.v.forEach((v,i)=>{
+    const h=(H-pt-pb)*v/max,x=pl+bw*i+(bw-w)/2,y=H-pb-h,hl=(o.hl||[]).includes(i);
+    s+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" class="${hl?"bh":"bn"}"/>`;
+    s+=`<text x="${x+w/2}" y="${y-7}" text-anchor="middle" class="vl ${hl?"vh":""}">${f(v)}</text>`;
+    s+=`<text x="${x+w/2}" y="${H-9}" text-anchor="middle" class="lb">${o.l[i]}</text>`;
+    if(o.tg){const ty=H-pb-(H-pt-pb)*o.tg[i]/max;s+=`<line x1="${x-5}" x2="${x+w+5}" y1="${ty}" y2="${ty}" class="tg"/>`}
+  });
+  s+="</svg>";
+  if(o.tg)s+=`<div class="x-leg"><span><i class="sw" style="background:var(--x-c1)"></i>Realizado</span><span><i class="sw tgsw"></i>Meta</span></div>`;
+  return s;
+}
+function cBarsH(o){
+  const W=560,rh=34,n=o.v.length,H=n*rh+6,lw=o.lw||120,f=fm(o),max=Math.max(...o.v);
+  let s=`<svg viewBox="0 0 ${W} ${H}" class="x-svg">`;
+  o.v.forEach((v,i)=>{
+    const y=i*rh+6,w=(W-lw-70)*v/max,hl=(o.hl||[]).includes(i);
+    s+=`<text x="${lw-10}" y="${y+rh/2}" text-anchor="end" dominant-baseline="middle" class="lb">${o.l[i]}</text>`;
+    s+=`<rect x="${lw}" y="${y+5}" width="${w}" height="${rh-14}" class="${hl?"bh":"bn"}"/>`;
+    s+=`<text x="${lw+w+8}" y="${y+rh/2}" dominant-baseline="middle" class="vl ${hl?"vh":""}">${f(v)}</text>`;
+  });
+  return s+"</svg>";
+}
+function cLine(o){
+  const W=560,H=225,pl=44,pr=56,pt=22,pb=28,n=o.l.length,f=fm(o);
+  const all=o.s.flatMap(x=>x.v).concat(o.tg!=null?[o.tg]:[]);
+  let lo=Math.min(...all),hi=Math.max(...all);const pad=(hi-lo)*.18||1;lo-=pad;hi+=pad;
+  const X=i=>pl+(W-pl-pr)*i/(n-1),Y=v=>pt+(H-pt-pb)*(1-(v-lo)/(hi-lo));
+  let s=`<svg viewBox="0 0 ${W} ${H}" class="x-svg">`;
+  for(let k=0;k<=3;k++){const v=lo+(hi-lo)*k/3,y=Y(v);s+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" class="gr"/><text x="${pl-6}" y="${y}" text-anchor="end" dominant-baseline="middle" class="lb sm">${F(v,o.ydec||0)}</text>`}
+  if(o.ann){const x=X(o.ann.i);s+=`<line x1="${x}" x2="${x}" y1="${pt-6}" y2="${H-pb}" class="an"/><text x="${x+6}" y="${pt+2}" class="lb an-t">${o.ann.t}</text>`}
+  if(o.tg!=null){const y=Y(o.tg);s+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" class="tg"/><text x="${W-pr+6}" y="${y}" dominant-baseline="middle" class="lb sm">${o.tgl||"Meta"}</text>`}
+  o.s.forEach((se,k)=>{
+    const pts=se.v.map((v,i)=>`${X(i)},${Y(v)}`).join(" ");
+    if(k===0)s+=`<polygon points="${X(0)},${H-pb} ${pts} ${X(n-1)},${H-pb}" class="area"/>`;
+    s+=`<polyline points="${pts}" class="ln c${k+1}"/>`;
+    const lv=se.v[n-1];s+=`<circle cx="${X(n-1)}" cy="${Y(lv)}" r="4" class="dt c${k+1}"/><text x="${X(n-1)+8}" y="${Y(lv)}" dominant-baseline="middle" class="vl ${k===0?"vh":""}">${f(lv)}</text>`;
+  });
+  o.l.forEach((l,i)=>{if(n<=12||i%2===0)s+=`<text x="${X(i)}" y="${H-8}" text-anchor="middle" class="lb">${l}</text>`});
+  s+="</svg>";
+  if(o.s.length>1)s+=`<div class="x-leg">${o.s.map((se,k)=>`<span><i class="sw" style="background:var(--x-c${k+1})"></i>${se.n}</span>`).join("")}</div>`;
+  return s;
+}
+function cForecast(o){
+  const W=560,H=225,pl=44,pr=20,pt=20,pb=28,f=fm(o);
+  const hN=o.hv.length,n=hN+o.p.length,L=o.l;
+  const lowA=o.p.map((v,i)=>v*(1-o.band*(i+1)/o.p.length)),highA=o.p.map((v,i)=>v*(1+o.band*(i+1)/o.p.length));
+  const all=[...o.hv,...lowA,...highA];let lo=Math.min(...all)*.95,hi=Math.max(...all)*1.03;
+  const X=i=>pl+(W-pl-pr)*i/(n-1),Y=v=>pt+(H-pt-pb)*(1-(v-lo)/(hi-lo));
+  let s=`<svg viewBox="0 0 ${W} ${H}" class="x-svg">`;
+  for(let k=0;k<=3;k++){const v=lo+(hi-lo)*k/3,y=Y(v);s+=`<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" class="gr"/><text x="${pl-6}" y="${y}" text-anchor="end" dominant-baseline="middle" class="lb sm">${F(v)}</text>`}
+  const last=hN-1,top=[`${X(last)},${Y(o.hv[last])}`,...highA.map((v,i)=>`${X(hN+i)},${Y(v)}`)],bot=[...lowA.map((v,i)=>`${X(hN+i)},${Y(v)}`)].reverse();
+  s+=`<polygon points="${top.join(" ")} ${bot.join(" ")}" class="band"/>`;
+  s+=`<line x1="${X(last)}" x2="${X(last)}" y1="${pt}" y2="${H-pb}" class="an"/><text x="${X(last)+6}" y="${pt+4}" class="lb an-t">Projeção →</text>`;
+  s+=`<polyline points="${o.hv.map((v,i)=>`${X(i)},${Y(v)}`).join(" ")}" class="ln c1"/>`;
+  s+=`<polyline points="${X(last)},${Y(o.hv[last])} ${o.p.map((v,i)=>`${X(hN+i)},${Y(v)}`).join(" ")}" class="ln c2 dash"/>`;
+  L.forEach((l,i)=>s+=`<text x="${X(i)}" y="${H-8}" text-anchor="middle" class="lb sm">${l}</text>`);
+  s+="</svg>";
+  s+=`<div class="x-leg"><span><i class="sw" style="background:var(--x-c1)"></i>Realizado</span><span><i class="sw" style="background:var(--x-c2)"></i>Projeção (cenário base)</span><span><i class="sw bandsw"></i>Faixa pessimista–otimista</span></div>`;
+  return s;
+}
+function cDonut(o){
+  const tot=o.items.reduce((a,b)=>a+b[1],0),r=58,C=2*Math.PI*r;let off=0;
+  let s=`<div class="x-donut"><svg viewBox="0 0 160 160" class="x-svg"><circle cx="80" cy="80" r="${r}" class="dbg"/>`;
+  o.items.forEach((it,i)=>{const len=C*it[1]/tot;s+=`<circle cx="80" cy="80" r="${r}" fill="none" stroke="var(--x-c${i+1})" stroke-width="22" stroke-dasharray="${len-2} ${C-len+2}" stroke-dashoffset="${-off}" transform="rotate(-90 80 80)"/>`;off+=len});
+  s+=`<text x="80" y="76" text-anchor="middle" class="vl vh big">${F(o.items[0][1]/tot*100)}%</text><text x="80" y="96" text-anchor="middle" class="lb sm">${o.items[0][0].split(" ")[0]}</text></svg><ul>`;
+  o.items.forEach((it,i)=>s+=`<li><i class="sw" style="background:var(--x-c${i+1})"></i><span>${it[0]}</span><b>${F(it[1]/tot*100)}%</b></li>`);
+  return s+"</ul></div>";
+}
+function cWaterfall(o){
+  const W=560,H=235,pl=8,pr=8,pt=24,pb=40,n=o.items.length;let run=0;const bars=[];
+  o.items.forEach(([l,v,t])=>{if(t==="t"){bars.push({l,a:0,b:v,v,t});run=v}else{bars.push({l,a:run,b:run+v,v,t});run+=v}});
+  const pts=bars.flatMap(b=>b.t==="t"?[b.b]:[b.a,b.b]);const mx=Math.max(...pts),mn=Math.min(...pts);
+  const lo=Math.max(0,mn-(mx-mn)*1.3),hi=mx+(mx-mn)*.25;const Y=v=>pt+(H-pt-pb)*(1-(v-lo)/(hi-lo));
+  const bw=(W-pl-pr)/n,w=bw*.62;
+  let s=`<svg viewBox="0 0 ${W} ${H}" class="x-svg"><line x1="${pl}" x2="${W-pr}" y1="${H-pb}" y2="${H-pb}" class="ax"/>`;
+  bars.forEach((b,i)=>{
+    const x=pl+bw*i+(bw-w)/2,y1=Y(Math.max(b.a,b.b)),y2=b.t==="t"?H-pb:Y(Math.min(b.a,b.b));
+    const cls=b.t==="t"?"bn":(b.v>=0?"bpos":"bneg");
+    s+=`<rect x="${x}" y="${y1}" width="${w}" height="${Math.max(2,y2-y1)}" class="${cls}"/>`;
+    s+=`<text x="${x+w/2}" y="${y1-7}" text-anchor="middle" class="vl ${b.t==="t"?"vh":""}">${b.t==="t"?F(b.v):(b.v>0?"+":"−")+F(Math.abs(b.v))}</text>`;
+    b.l.split("\n").forEach((ln,k)=>s+=`<text x="${x+w/2}" y="${H-pb+15+k*12}" text-anchor="middle" class="lb sm">${ln}</text>`);
+    if(i<n-1){const nx=pl+bw*(i+1)+(bw-w)/2;s+=`<line x1="${x+w}" x2="${nx}" y1="${Y(b.b)}" y2="${Y(b.b)}" class="cn"/>`}
+  });
+  return s+"</svg>";
+}
+function cFunnel(o){
+  const W=560,rh=38,n=o.steps.length,H=n*rh+4,max=o.steps[0][1],cx=330,mw=300;
+  let s=`<svg viewBox="0 0 ${W} ${H}" class="x-svg">`;
+  o.steps.forEach(([l,v],i)=>{
+    const w=Math.max(40,mw*v/max),y=i*rh+2,last=i===n-1;
+    s+=`<text x="10" y="${y+rh/2}" dominant-baseline="middle" class="lb">${l}</text>`;
+    s+=`<rect x="${cx-w/2}" y="${y+4}" width="${w}" height="${rh-10}" class="${last?"bh":"fnb"}" style="opacity:${last?1:1-i*.1}"/>`;
+    s+=`<text x="${cx}" y="${y+rh/2}" text-anchor="middle" dominant-baseline="middle" class="vl inbar">${F(v)}</text>`;
+    if(i>0){const c=v/o.steps[i-1][1]*100;s+=`<text x="${W-8}" y="${y+rh/2}" text-anchor="end" dominant-baseline="middle" class="vl ${c<55?"neg":""}">${F(c)}%</text>`}
+  });
+  return s+`<text x="${W-8}" y="-2" text-anchor="end" class="lb sm">conv. etapa</text></svg>`;
+}
+function cHeat(o){
+  const cs=46,ox=56,oy=8,W=ox+cs*5+130,H=oy+cs*5+40;
+  let s=`<svg viewBox="0 0 ${W} ${H}" class="x-svg heat">`;
+  for(let p=5;p>=1;p--)for(let i=1;i<=5;i++){const sc=p*i,cls=sc>=15?"hh":sc>=8?"hm":"hl";s+=`<rect x="${ox+(i-1)*cs+1}" y="${oy+(5-p)*cs+1}" width="${cs-2}" height="${cs-2}" class="${cls}"/>`}
+  for(let k=1;k<=5;k++){s+=`<text x="${ox-8}" y="${oy+(5-k)*cs+cs/2}" text-anchor="end" dominant-baseline="middle" class="lb sm">${k}</text><text x="${ox+(k-1)*cs+cs/2}" y="${oy+cs*5+14}" text-anchor="middle" class="lb sm">${k}</text>`}
+  s+=`<text x="${ox+cs*2.5}" y="${H-4}" text-anchor="middle" class="lb">Impacto →</text><text x="14" y="${oy+cs*2.5}" text-anchor="middle" class="lb" transform="rotate(-90 14 ${oy+cs*2.5})">Probabilidade →</text>`;
+  const seen={};
+  o.r.forEach(([id,p,i])=>{const k=p+"-"+i;seen[k]=(seen[k]||0)+1;const dx=(seen[k]-1)*16;s+=`<circle cx="${ox+(i-1)*cs+cs/2-6+dx}" cy="${oy+(5-p)*cs+cs/2}" r="11" class="hdot"/><text x="${ox+(i-1)*cs+cs/2-6+dx}" y="${oy+(5-p)*cs+cs/2}" text-anchor="middle" dominant-baseline="middle" class="hid">${id}</text>`});
+  const lx=ox+cs*5+18;
+  [["hh","Crítico (≥15)"],["hm","Alto/Médio (8–14)"],["hl","Baixo (<8)"]].forEach(([c,t],k)=>s+=`<rect x="${lx}" y="${oy+10+k*24}" width="14" height="14" class="${c}"/><text x="${lx+20}" y="${oy+17+k*24}" dominant-baseline="middle" class="lb sm">${t}</text>`);
+  return s+"</svg>";
+}
+function cGauge(o){
+  const r=80,C=Math.PI*r,v=o.v/100,t=o.tg/100;
+  const ang=Math.PI*(1-t),tx=110+Math.cos(ang)*r,ty=100-Math.sin(ang)*r;
+  return `<div class="x-gauge"><svg viewBox="0 0 220 125" class="x-svg"><path d="M30 100 A80 80 0 0 1 190 100" class="gbg"/><path d="M30 100 A80 80 0 0 1 190 100" class="gfg" stroke-dasharray="${C*v} ${C}"/><line x1="${110+Math.cos(ang)*(r-16)}" y1="${100-Math.sin(ang)*(r-16)}" x2="${tx+Math.cos(ang)*14}" y2="${ty-Math.sin(ang)*14}" class="gtg"/><text x="110" y="92" text-anchor="middle" class="vl vh big2">${F(o.v)}%</text><text x="110" y="116" text-anchor="middle" class="lb sm">meta ${o.tg}%</text></svg><p>${o.l}</p></div>`;
+}
+function cPareto(o){
+  const W=560,H=225,pl=8,pr=36,pt=24,pb=28,n=o.v.length,tot=o.v.reduce((a,b)=>a+b,0),max=Math.max(...o.v)*1.12;
+  const bw=(W-pl-pr)/n,w=bw*.58;let cum=0;const pts=[];
+  let s=`<svg viewBox="0 0 ${W} ${H}" class="x-svg"><line x1="${pl}" x2="${W-pr}" y1="${H-pb}" y2="${H-pb}" class="ax"/>`;
+  const y80=pt+(H-pt-pb)*.2;s+=`<line x1="${pl}" x2="${W-pr}" y1="${y80}" y2="${y80}" class="tg"/><text x="${W-pr+4}" y="${y80}" dominant-baseline="middle" class="lb sm">80%</text>`;
+  o.v.forEach((v,i)=>{const h=(H-pt-pb)*v/max,x=pl+bw*i+(bw-w)/2,y=H-pb-h,hl=i===0;cum+=v;pts.push(`${x+w/2},${pt+(H-pt-pb)*(1-cum/tot)}`);
+    s+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" class="${hl?"bh":"bn"}"/><text x="${x+w/2}" y="${y-7}" text-anchor="middle" class="vl ${hl?"vh":""}">${v}</text><text x="${x+w/2}" y="${H-9}" text-anchor="middle" class="lb sm">${o.l[i]}</text>`});
+  s+=`<polyline points="${pts.join(" ")}" class="ln c2"/>`+pts.map(p=>{const[a,b]=p.split(",");return `<circle cx="${a}" cy="${b}" r="3" class="dt c2"/>`}).join("");
+  return s+`</svg><div class="x-leg"><span><i class="sw" style="background:var(--x-c1)"></i>Nº de pontos</span><span><i class="sw" style="background:var(--x-c2)"></i>% acumulado</span></div>`;
+}
+
+/* ============================================================
+   RENDERIZADOR DOS EXEMPLOS
+   ============================================================ */
+const numRe=/^[\s(+\-−]*(R\$\s*)?[\d.,]+\s*(%|p\.p\.|mi|mil)?\)?$/;
+function xb(b){
+  const H=b.h?`<div class="x-h">${b.h}</div>`:"";
+  switch(b.k){
+    case "title": return `<header class="x-title"><div class="x-eb">${b.e||""}</div><div class="x-t">${b.t}</div>${b.s?`<div class="x-s">${b.s}</div>`:""}</header>`;
+    case "kpis": return `<div class="x-kpis">${b.i.map(([l,v,d,dir,sub])=>`<div class="x-kpi"><div class="x-kl">${l}</div><div class="x-kv">${v}</div>${d?`<div class="x-kd ${dir||""}">${d}</div>`:""}${sub?`<div class="x-ks">${sub}</div>`:""}</div>`).join("")}</div>`;
+    case "callout": return `<div class="x-callout">${b.h?`<div class="x-ch">${b.h}</div>`:""}<div>${b.x}</div></div>`;
+    case "quote": return `<blockquote class="x-quote">${b.x}</blockquote>`;
+    case "text": return `<div class="x-text">${H}<p>${b.x}</p></div>`;
+    case "bullets": return `<div class="x-card x-bul">${H}<ul>${b.i.map(x=>`<li>${x}</li>`).join("")}</ul></div>`;
+    case "table": return `<div class="x-card x-tab">${H}<div class="x-tw"><table><thead><tr>${b.c.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${b.r.map(r=>{const tot=String(r[0]).startsWith("*");return `<tr class="${tot?"tot":""}">${r.map((c,i)=>{c=String(c);if(i===0&&tot)c=c.slice(1);const cls=[i>0&&numRe.test(c)?"n":"",/^[−\-(]/.test(c.trim())&&i>0&&numRe.test(c)?"neg":"",/^\+/.test(c.trim())?"pos":""].join(" ");return `<td class="${cls}">${c}</td>`}).join("")}</tr>`}).join("")}</tbody></table></div>${b.note?`<div class="x-note">${b.note}</div>`:""}</div>`;
+    case "split": return `<div class="x-split">${xb(b.a)}${xb(b.b)}</div>`;
+    case "rag": return `<div class="x-rag">${b.i.map(([l,st,t])=>`<div class="x-rg"><i class="${st}"></i><div><b>${l}</b><span>${t}</span></div></div>`).join("")}</div>`;
+    case "timeline": return `<div class="x-card">${H}<div class="x-tl">${b.i.map(([d,l,done])=>`<div class="${done?"done":""}"><i></i><b>${d}</b><span>${l}</span></div>`).join("")}</div></div>`;
+    case "swot": return `<div class="x-swot">${[["S","Forças",b.S,"pos"],["W","Fraquezas",b.W,"neg"],["O","Oportunidades",b.O,"pos"],["T","Ameaças",b.T,"neg"]].map(([k,t,it,c])=>`<div class="x-q ${c}"><div class="x-qh"><b>${k}</b>${t}</div><ul>${it.map(x=>`<li>${x}</li>`).join("")}</ul></div>`).join("")}</div>`;
+    case "whys": return `<div class="x-card">${H}<ol class="x-whys">${b.i.map(([q,a],i)=>`<li class="${i===b.i.length-1?"root":""}" style="margin-left:${i*14}px"><span>${q}</span><b>${a}</b></li>`).join("")}</ol></div>`;
+    case "memo": return `<div class="x-memo">${b.f.map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join("")}</div>`;
+    case "bars": return `<div class="x-card x-chart">${H}${cBars(b)}</div>`;
+    case "line": return `<div class="x-card x-chart">${H}${cLine(b)}</div>`;
+    case "forecast": return `<div class="x-card x-chart">${H}${cForecast(b)}</div>`;
+    case "donut": return `<div class="x-card x-chart">${H}${cDonut(b)}</div>`;
+    case "waterfall": return `<div class="x-card x-chart">${H}${cWaterfall(b)}</div>`;
+    case "funnel": return `<div class="x-card x-chart">${H}${cFunnel(b)}</div>`;
+    case "heat": return `<div class="x-card x-chart">${H}${cHeat(b)}</div>`;
+    case "gauge": return `<div class="x-card x-chart">${H}${cGauge(b)}</div>`;
+    case "pareto": return `<div class="x-card x-chart">${H}${cPareto(b)}</div>`;
+  }
+  return "";
+}
+const renderEx=(id,style)=>`<div class="ex s-${style}">${(EX[id]||[]).map(xb).join("")}<footer class="x-foot"><span>Dados fictícios · ilustração</span><span>Pág. 1</span></footer></div>`;
+
+/* ============================================================
+   EXEMPLOS COM DADOS (fictícios, coerentes entre si)
+   ============================================================ */
+const EX = {
+executive:[
+  {k:"title",e:"Relatório Executivo · Diretoria de Canais",t:"Rede de Correspondentes — Resultado do 3º trimestre de 2026",s:"Preparado por Operações · 01/10/2026"},
+  {k:"callout",h:"Resumo executivo",x:"A rede fechou o trimestre com <b>4,82 milhões de transações</b> (+5,5% vs 2T), 2,1% acima da meta. O crescimento veio do Nordeste; Sul e Sudeste ficaram abaixo. A inatividade subiu para 11,8% e exige decisão sobre o lote de retirada de equipamentos de outubro."},
+  {k:"kpis",i:[["Transações","4,82 mi","▲ 5,5% vs 2T","pos","meta 4,72 mi"],["Receita de tarifas","R$ 18,6 mi","▲ 3,9% vs 2T","pos","meta R$ 18,2 mi"],["Pontos ativos","8.412","▼ 1,2% vs 2T","neg","meta 8.600"],["Inatividade","11,8%","▲ 1,9 p.p.","neg","limite 10%"]]},
+  {k:"line",h:"Transações mensais (mil) — set/26 é o maior volume do ano",l:["jan","fev","mar","abr","mai","jun","jul","ago","set"],s:[{n:"Transações",v:[1420,1395,1510,1480,1530,1560,1570,1605,1645]}],tg:1575},
+  {k:"split",a:{k:"bullets",h:"Destaques",i:["Nordeste +14% em transações, puxado por BA e PE","Recebimento de contas +9% com a campanha de agosto","Credenciamento caiu de 21 para 14 dias"]},b:{k:"bullets",h:"Riscos e pontos de atenção",i:["Inatividade em alta no Sul (15,2%)","3 redes parceiras concentram 22% do volume","640 POS de modelo antigo com troca atrasada"]}},
+  {k:"callout",h:"Decisões solicitadas",x:"<b>1.</b> Aprovar a retirada de 312 equipamentos inativos há mais de 90 dias — Operações, até 31/10.<br><b>2.</b> Liberar campanha de reativação no Sul — R$ 180 mil — Comercial, até 15/10."}
+],
+onepage:[
+  {k:"title",e:"One-page · Setembro/2026",t:"Ativação de novos pontos ficou 9 p.p. abaixo da meta",s:"Pergunta central: estamos convertendo credenciamentos em pontos produtivos?"},
+  {k:"kpis",i:[["Novos credenciados","214","▲ 8% vs ago","pos"],["Ativados em 30 dias","61%","meta 70%","neg"],["Transações por novo ponto","312","▲ 12% vs ago","pos"]]},
+  {k:"split",a:{k:"bars",h:"Ativação em 30 dias por regional (%)",l:["N","NE","CO","SE","S"],v:[74,68,63,55,49],hl:[3,4],suf:"%"},b:{k:"bullets",h:"Leitura",i:["Norte e Nordeste acima de 65%","Sul e Sudeste puxam a média para baixo","Pontos com treinamento presencial ativam 2× mais","Kit de boas-vindas atrasou em 38 pontos do SE"]}},
+  {k:"callout",h:"Conclusão e próximo passo",x:"A ativação está abaixo da meta por falhas de onboarding no Sul e no Sudeste. <b>Próximo passo:</b> treinamento presencial obrigatório na 1ª semana, a partir de outubro."}
+],
+storytelling:[
+  {k:"title",e:"Data Storytelling",t:"O Nordeste deixou de ser a região “de menor volume” — e virou nosso motor de crescimento"},
+  {k:"text",h:"Como era",x:"Até 2025, o Nordeste respondia por 18% das transações da rede e era tratado como região de manutenção. Os investimentos em credenciamento se concentravam no Sudeste."},
+  {k:"line",h:"Depois da campanha de interiorização, as curvas se aproximaram",l:["1T25","2T25","3T25","4T25","1T26","2T26","3T26"],s:[{n:"Sudeste",v:[44,43,43,41,40,38,37]},{n:"Nordeste",v:[18,19,19,21,23,25,26]}],ann:{i:3,t:"Campanha de interiorização"},suf:"%"},
+  {k:"quote",x:"Pontos em cidades com menos de 20 mil habitantes fazem <b>2,6× mais transações</b> que os das capitais — muitas vezes são a única opção bancária num raio de 30 km."},
+  {k:"bars",h:"Transações por ponto/mês, por porte do município",l:["< 20 mil","20–50 mil","50–200 mil","200 mil–1 mi","> 1 mi"],v:[742,655,410,318,285],hl:[0,1]},
+  {k:"bullets",h:"O que fazer agora",i:["Redirecionar 40% da meta de prospecção para municípios com menos de 50 mil habitantes","Mapear os 380 municípios do NE sem correspondente","Revisar a remuneração dos pontos de alto volume"]}
+],
+financial:[
+  {k:"title",e:"Relatório Financeiro · Gerencial, não auditado",t:"Canal Correspondentes — Resultado de Setembro/2026",s:"Valores em R$ mil"},
+  {k:"kpis",i:[["Receita total","6.240","▲ 4,1% vs orçado","pos"],["Margem de contribuição","46,8%","▼ 2,0 p.p. vs orçado","neg"],["Resultado","1.512","▼ 2,8% vs orçado","neg"],["Geração de caixa","1.390","▲ 3,0% vs ago","pos"]]},
+  {k:"table",h:"DRE resumida",c:["Linha","Real","Orçado","Var. R$","Var. %"],r:[["Receita de tarifas","5.180","4.990","+190","+3,8%"],["Receita de produtos","1.060","1.005","+55","+5,5%"],["*Receita total","6.240","5.995","+245","+4,1%"],["Remuneração de correspondentes","(2.430)","(2.250)","(180)","−8,0%"],["Logística e equipamentos","(890)","(820)","(70)","−8,5%"],["Despesas operacionais","(1.408)","(1.370)","(38)","−2,8%"],["*Resultado","1.512","1.555","(43)","−2,8%"]],note:"Var. % = (Real − Orçado) / |Orçado|. Para despesas, variação negativa = gasto acima do orçado."},
+  {k:"waterfall",h:"Ponte de resultado: do orçado (1.555) ao real (1.512)",items:[["Orçado",1555,"t"],["Tarifas",190],["Produtos",55],["Remune-\nração",-180],["Logística",-70],["Desp.\noper.",-38],["Real",1512,"t"]]},
+  {k:"split",a:{k:"line",h:"Geração de caixa (R$ mil)",l:["abr","mai","jun","jul","ago","set"],s:[{n:"Caixa",v:[1180,1240,1210,1320,1350,1390]}]},b:{k:"text",h:"Comentário da gestão",x:"A receita superou o orçamento puxada pelas tarifas de recebimento de contas. O resultado ficou 2,8% abaixo porque a remuneração variável dos correspondentes cresceu mais que a receita (campanha de agosto) e a logística antecipou R$ 70 mil previstos para o 4T."}},
+  {k:"bullets",h:"Notas e eventos não recorrentes",i:["Remuneração inclui R$ 120 mil de bônus não recorrente da campanha de agosto","Logística: antecipação de custos de troca de POS do 4T","Sem efeitos de provisão no período"]}
+],
+dashboard:[
+  {k:"title",e:"Painel semanal",t:"Rede de Correspondentes · Semana 39 (22 a 28/set)",s:"Filtros: todas as regionais · todos os produtos"},
+  {k:"kpis",i:[["Transações","1,12 mi","▲ 2,3%","pos"],["Valor movimentado","R$ 486 mi","▲ 1,1%","pos"],["Pontos ativos","8.412","▼ 0,4%","neg"],["Tíquete médio","R$ 434","▼ 1,2%","neg"],["NPS","62","▲ 3 pts","pos"]]},
+  {k:"split",a:{k:"line",h:"Transações por dia (mil)",l:["seg","ter","qua","qui","sex","sáb","dom"],s:[{n:"Semana 39",v:[178,172,169,175,210,142,74]},{n:"Semana 38",v:[171,170,166,172,201,139,76]}]},b:{k:"donut",h:"Mix por produto",items:[["Recebimento de contas",46],["Saques",22],["Depósitos",18],["Benefícios",9],["Outros",5]]}},
+  {k:"split",a:{k:"bars",h:"Transações por regional (mil)",horiz:true,lw:50,l:["SE","NE","S","CO","N"],v:[398,286,192,134,110],hl:[1]},b:{k:"table",h:"Top 5 pontos da semana",c:["Ponto","Cidade","Trans.","Var."],r:[["CB-0412","Feira de Santana/BA","4.812","+8%"],["CB-1187","Caruaru/PE","4.505","+5%"],["CB-0093","Campinas/SP","4.210","−2%"],["CB-2240","Imperatriz/MA","3.988","+11%"],["CB-0731","Londrina/PR","3.702","−4%"]]}}
+],
+flash:[
+  {k:"title",e:"⚡ Flash operacional",t:"Quinta, 01/10/2026 · 09h",s:"Referência: D-1 (30/09)"},
+  {k:"rag",i:[["Transações","ok","Dentro do esperado"],["Sistemas","warn","Lentidão no autorizador das 14h às 15h"],["Logística POS","ok","38 trocas concluídas"],["Suporte","bad","Fila com 46 chamados"]]},
+  {k:"kpis",i:[["Transações D-1","168,4 mil","meta 165 mil","pos"],["Pontos sem transação","612","▲ 48 vs D-2","neg"],["Chamados abertos","46","▲ 19 vs D-2","neg"]]},
+  {k:"bullets",h:"Ocorrências",i:["Instabilidade do autorizador (14h–15h): 2.140 transações recusadas","Pico de chamados por erro de impressão no modelo X-200","Lote de 120 bobinas chegou ao CD Recife"]},
+  {k:"callout",h:"Ação para hoje",x:"<b>Suporte:</b> força-tarefa até 12h para zerar a fila (resp.: Marina). <b>TI:</b> confirmar a causa da lentidão até 16h."}
+],
+status:[
+  {k:"title",e:"Status report #08 · 15 a 30/set/2026",t:"Projeto: Automação da triagem de e-mails com IA",s:"Gerente: Operações · 62% concluído"},
+  {k:"rag",i:[["Escopo","ok","Sem alterações"],["Prazo","warn","Integração com o Outlook 1 semana atrasada"],["Custo","ok","R$ 38 mil de R$ 55 mil"]]},
+  {k:"timeline",h:"Marcos",i:[["04/08","Kickoff",1],["25/08","Protótipo",1],["15/09","Piloto 1 equipe",1],["07/10","Integração"],["28/10","Piloto ampliado"],["18/11","Go-live"]]},
+  {k:"split",a:{k:"bullets",h:"Feito no período",i:["Classificação em 9 categorias com 91% de acerto","Rascunhos automáticos para 3 tipos de demanda","Treinamento de 6 analistas"]},b:{k:"bullets",h:"Próximos passos",i:["Integração com a caixa compartilhada — TI, 07/10","Ajustar categorias com acerto < 85% — 10/10","Definir indicadores do piloto ampliado — 14/10"]}},
+  {k:"table",h:"Riscos, problemas e decisões (RAID)",c:["Tipo","Descrição","Resp.","Prazo"],r:[["Risco","Liberação de acesso à API pela Segurança","TI","05/10"],["Problema","Categoria “contestação” com 78% de acerto","Operações","10/10"],["Decisão","Ampliar o piloto para 3 equipes?","Gerência","14/10"]]}
+],
+qbr:[
+  {k:"title",e:"QBR · Jul–Set 2026",t:"Prospecção bateu a meta de credenciamento, mas a ativação ficou para trás",s:"Equipe de Prospecção e Expansão"},
+  {k:"kpis",i:[["Credenciamentos","642","107% da meta","pos"],["Pontos ativados","401","89% da meta","neg"],["Municípios novos","58","116% da meta","pos"],["Custo por ativação","R$ 1.840","▼ 9% vs 2T","pos"]]},
+  {k:"bars",h:"Credenciamentos por mês: realizado × meta",l:["Jul","Ago","Set"],v:[198,214,230],tg:[200,200,200],hl:[2]},
+  {k:"split",a:{k:"bullets",h:"O que funcionou",i:["Rotas por cluster de municípios: −22% em deslocamento","Associações comerciais geraram 31% dos leads","Checklist digital: credenciamento em 14 dias"]},b:{k:"bullets",h:"O que não funcionou",i:["Ativação em 30 dias abaixo da meta — onboarding fraco no Sul","Leads de redes de farmácia converteram só 9%","2 prospectores saíram em agosto"]}},
+  {k:"table",h:"Plano do 4º trimestre",c:["Meta","Alvo","Iniciativa","Resp."],r:[["Credenciamentos","620","Foco em municípios < 50 mil hab.","Prospecção"],["Ativação em 30 dias","75%","Onboarding presencial na 1ª semana","Consultoria"],["Municípios novos","50","Mapa de municípios desassistidos","BI"]]},
+  {k:"callout",h:"Pedidos de apoio",x:"Aprovar 2 vagas de prospector para o Nordeste e acesso à base de CNPJs ativos para o sistema de mapeamento."}
+],
+rca:[
+  {k:"title",e:"Análise de causa raiz",t:"Queda de 18% nas transações da regional Sul em agosto",s:"Responsável: Operações · Concluída em 12/09/2026"},
+  {k:"text",h:"Definição do problema",x:"<b>O quê:</b> −18% de transações vs julho (−34,6 mil). <b>Onde:</b> 142 pontos, 80% no interior do RS e de SC. <b>Quando:</b> a partir de 05/08. <b>Impacto:</b> R$ 128 mil em tarifas no mês."},
+  {k:"whys",h:"5 Porquês",i:[["Por que as transações caíram?","142 pontos ficaram 6+ dias sem transacionar"],["Por quê?","Os POS apresentaram falha de comunicação"],["Por quê?","Usam chip de operadora que desligou a rede 2G na região"],["Por quê?","O inventário não registra a tecnologia de rede de cada POS"],["Causa raiz","Não existe processo para acompanhar o fim de vida de tecnologias de telecom"]]},
+  {k:"pareto",h:"Motivo dos 142 pontos parados — “sem sinal 2G” explica 68%",l:["Sem 2G","Bobina","Fechado","Limite","Outros"],v:[96,18,12,9,7]},
+  {k:"table",h:"Plano de ação (5W2H resumido)",c:["O quê","Quem","Quando","Como"],r:[["Trocar chip por multioperadora 4G nos 96 POS","Logística","15/10","Envio de chips + troca remota"],["Incluir tecnologia de rede no inventário","Operações","31/10","Novo campo no cadastro"],["Criar alerta de fim de vida de tecnologia","TI + Operações","30/11","Monitorar comunicados das operadoras"]]}
+],
+benchmark:[
+  {k:"title",e:"Comparativo",t:"Escolha da ferramenta de BI para o painel da rede",s:"3 opções avaliadas · notas de 1 a 5"},
+  {k:"table",h:"Matriz de decisão",c:["Critério","Peso","Ferramenta A","Ferramenta B","Ferramenta C"],r:[["Custo de licença","25%","3","5","4"],["Integração com bases internas","25%","5","3","4"],["Facilidade para o time","20%","4","4","3"],["Segurança e governança","20%","5","3","3"],["Escalabilidade","10%","5","3","3"],["*Score ponderado","100%","4,30","3,70","3,50"]]},
+  {k:"bars",h:"Score ponderado final",l:["Ferramenta A","Ferramenta B","Ferramenta C"],v:[4.3,3.7,3.5],dec:2,hl:[0]},
+  {k:"split",a:{k:"bullets",h:"Ferramenta A — prós",i:["Conecta direto nas bases internas","Controle de acesso por perfil","Suporta o volume de 5 anos de histórico"]},b:{k:"bullets",h:"Ferramenta A — contras",i:["Licença mais cara (R$ 62/usuário/mês)","Curva de aprendizado em DAX","Depende de liberação da TI"]}},
+  {k:"callout",h:"Recomendação",x:"<b>Ferramenta A</b>, condicionada à aprovação de 12 licenças. Sensibilidade: com peso 40% para custo, A ainda lidera, mas por margem estreita (4,05 × 3,95)."}
+],
+swot:[
+  {k:"title",e:"Análise SWOT",t:"Correspondentes em municípios com menos de 50 mil habitantes"},
+  {k:"swot",S:["Única opção bancária em 41% desses municípios","2,4× mais transações por ponto que nas capitais","Relacionamento próximo com o comércio local"],W:["Dependência de sinal de celular instável","Treinamento remoto e irregular","Concentração em poucos parceiros"],O:["380 municípios do NE ainda sem correspondente","Expansão do pagamento de benefícios sociais","Pix e saque no comércio aumentam o fluxo"],T:["Fintechs com agentes próprios no interior","Desligamento da rede 2G pelas operadoras","Mais tentativas de fraude em pontos rurais"]},
+  {k:"table",h:"Cruzamentos (matriz TOWS)",c:["Estratégia","Ação"],r:[["SO — força × oportunidade","Priorizar os 380 municípios sem atendimento usando o relacionamento local"],["ST — força × ameaça","Usar a capilaridade como diferencial frente às fintechs"],["WO — fraqueza × oportunidade","Treinamento presencial atrelado aos novos credenciamentos"],["WT — fraqueza × ameaça","Troca para POS 4G multioperadora + monitoramento antifraude"]]},
+  {k:"callout",h:"Prioridades estratégicas",x:"1. Expansão no Nordeste interior · 2. Modernização da conectividade dos POS · 3. Programa de capacitação presencial."}
+],
+businesscase:[
+  {k:"title",e:"Business case",t:"Agente de IA para triagem de e-mails da Operação",s:"Horizonte: 12 meses · Valores em R$"},
+  {k:"callout",h:"O problema",x:"A equipe recebe ~1.850 e-mails/mês. A triagem manual leva 4,5 min por e-mail = <b>139 horas/mês</b> (≈ 0,9 pessoa) e o tempo médio de primeira resposta é de 26 horas."},
+  {k:"split",a:{k:"text",h:"Solução proposta",x:"Agente em Python com IA classifica os e-mails e redige rascunhos; o analista revisa e envia. Piloto de 8 semanas em 1 equipe e depois ampliação. Premissa base: 70% da triagem automatizável, custo-hora de R$ 82."},b:{k:"kpis",i:[["Investimento","R$ 55 mil","implantação"],["Economia líquida/ano","R$ 82 mil","cenário base","pos"],["Payback","8 meses","cenário base","pos"]]}},
+  {k:"line",h:"Fluxo acumulado (R$ mil) — investimento se paga no 8º mês",l:["M0","M2","M4","M6","M8","M10","M12"],s:[{n:"Acumulado",v:[-55,-41.4,-27.8,-14.2,-0.6,13,26.6]}],tg:0,tgl:"Equilíbrio",dec:1},
+  {k:"table",h:"Cenários",c:["Cenário","Automação","Economia líquida/ano","Payback"],r:[["Pessimista","50%","R$ 54 mil","12 meses"],["*Base","70%","R$ 82 mil","8 meses"],["Otimista","85%","R$ 102 mil","6,5 meses"]],note:"Economia = horas automatizadas × R$ 82/h × 12 − R$ 14,4 mil/ano de custo de API e infraestrutura."},
+  {k:"callout",h:"Decisão solicitada",x:"Aprovar R$ 55 mil para o piloto de 8 semanas, com reavaliação em 15/12 com base no acerto de classificação (meta ≥ 90%)."}
+],
+incident:[
+  {k:"title",e:"Post-mortem · Severidade ALTA · Resolvido",t:"Indisponibilidade do autorizador de transações — 30/09/2026",s:"Abordagem sem culpados (blameless)"},
+  {k:"kpis",i:[["Duração","1h12min","14:02 → 15:14","neg"],["Pontos afetados","3.940","47% da rede","neg"],["Impacto estimado","R$ 41 mil","tarifas não realizadas","neg"]]},
+  {k:"timeline",h:"Linha do tempo",i:[["14:02","Início: lentidão",1],["14:09","Detecção pelo monitoramento",1],["14:20","Escalonado para TI",1],["14:48","Causa identificada",1],["15:05","Rollback",1],["15:14","Normalizado",1]]},
+  {k:"text",h:"Causa raiz e fatores contribuintes",x:"Atualização de certificado no balanceador às 13:55, fora de janela de mudança aprovada; metade dos nós passou a recusar conexões. <b>Fatores contribuintes:</b> o alerta só disparava acima de 5% de recusas e não havia runbook de rollback."},
+  {k:"table",h:"Ações",c:["Ação","Tipo","Resp.","Prazo"],r:[["Janela aprovada obrigatória para troca de certificados","Preventiva","TI Infra","10/10"],["Reduzir limiar do alerta para 1%","Preventiva","Monitoramento","07/10"],["Criar runbook de rollback","Corretiva","TI","15/10"],["Comunicado aos correspondentes","Corretiva","Operações","01/10"]]}
+],
+risk:[
+  {k:"title",e:"Relatório de riscos · Data-base 30/09/2026",t:"Limites de conta caixa dos correspondentes",s:"Escala 1–5 para probabilidade e impacto · Nível = P × I"},
+  {k:"kpis",i:[["Exposição total","R$ 64,2 mi","▲ 4,8% vs ago","neg"],["Riscos críticos","3","▲ 1 vs ago","neg"],["Acima do limite","27","correspondentes","neg"]]},
+  {k:"split",a:{k:"heat",h:"Mapa de calor",r:[["R1",4,5],["R2",3,5],["R3",4,4],["R4",2,4],["R5",3,3],["R6",2,2]]},b:{k:"bullets",h:"Mitigações e gatilhos",i:["<b>Gatilho:</b> bloquear novos depósitos ao atingir 110% do limite","Recolhimento extra em D+1 para os 27 acima do limite","Revisão trimestral dos limites dos 5 maiores parceiros","Seguro de numerário para pontos com saldo médio > R$ 80 mil"]}},
+  {k:"table",h:"Registro de riscos",c:["ID","Risco","P × I","Nível","Tend."],r:[["R1","Saldo acima do limite por mais de 3 dias","4 × 5","Crítico","↑"],["R2","5 parceiros concentram 31% da exposição","3 × 5","Crítico","→"],["R3","Atraso no recolhimento de numerário","4 × 4","Crítico","↑"],["R4","Fraude/assalto em pontos de alto saldo","2 × 4","Alto","→"],["R5","Erro no cadastro de limite","3 × 3","Médio","↓"],["R6","Falha no relatório diário de posição","2 × 2","Baixo","↓"]]}
+],
+forecast:[
+  {k:"title",e:"Projeção e tendências",t:"Transações devem crescer 6% no 4T, com pico em dezembro",s:"Método: tendência linear + sazonalidade mensal de 2023–2025"},
+  {k:"forecast",h:"Transações mensais (mil): realizado e projeção",l:["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez","jan","fev","mar"],hv:[1420,1395,1510,1480,1530,1560,1570,1605,1645],p:[1680,1640,1790,1520,1500,1610],band:.08},
+  {k:"kpis",i:[["4T26 · pessimista","4,72 mi","inatividade sobe a 14%"],["4T26 · base","5,11 mi","▲ 6,0% vs 3T","pos"],["4T26 · otimista","5,38 mi","reativação de 300 pontos","pos"]]},
+  {k:"split",a:{k:"text",h:"Premissas",x:"Rede estável em ~8.400 pontos; sazonalidade de dezembro (13º salário e festas) +9% vs novembro; janeiro e fevereiro −15% vs dezembro, padrão dos últimos 3 anos."},b:{k:"bullets",h:"Sinais de alerta",i:["Inatividade acima de 13% por 2 semanas","Queda > 5% no recebimento de contas","Atraso na troca dos 640 POS antigos"]}}
+],
+audit:[
+  {k:"title",e:"Auditoria de conformidade · 3T26",t:"Visitas de conformidade a correspondentes",s:"Amostra: 120 pontos em 9 estados · 12 itens por ponto"},
+  {k:"split",a:{k:"kpis",i:[["Itens verificados","1.440"],["Conformes","1.296","90%","pos"],["Não conformes","144","10%","neg"]]},b:{k:"gauge",h:"Índice de conformidade",v:90,tg:95,l:"5 p.p. abaixo da meta"}},
+  {k:"table",h:"Principais achados",c:["Achado","Critério","Evidência","Risco","Recomendação"],r:[["Operador sem certificação vigente (14 pontos)","Normativo interno","Cadastro × visita","Alto","Bloqueio até recertificação"],["Placa de identificação ausente (22)","Contrato, cl. 7.2","Fotos da visita","Médio","Envio de placas · prazo 15 dias"],["Comprovantes não arquivados (31)","Política de guarda","Checklist","Médio","Orientação + reauditoria"],["Tabela de tarifas não exposta (48)","Regra de transparência","Fotos","Baixo","Kit de comunicação visual"]]},
+  {k:"bullets",h:"Plano de regularização",i:["Bloquear os 14 operadores sem certificação — Compliance, 05/10","Reauditar os 31 pontos sem guarda de comprovantes — 30/11","Enviar 70 kits de comunicação visual — Logística, 20/10"]}
+],
+scorecard:[
+  {k:"title",e:"Scorecard · Setembro/2026",t:"Ranking de correspondentes por score de performance",s:"Score = 40% transações + 30% receita + 20% regularidade + 10% qualidade (normalizados 0–100)"},
+  {k:"table",h:"Ranking (extrato)",c:["#","Ponto","Cidade","Score","Faixa","Tend."],r:[["1","CB-0412","Feira de Santana/BA","96","A","↑"],["2","CB-2240","Imperatriz/MA","93","A","↑"],["3","CB-1187","Caruaru/PE","91","A","→"],["…","…","…","…","…","…"],["8.410","CB-1544","Rio Grande/RS","14","D","↓"],["8.411","CB-2981","Chapecó/SC","12","D","↓"],["8.412","CB-3310","Pelotas/RS","9","D","↓"]]},
+  {k:"bars",h:"Distribuição por faixa (nº de pontos)",l:["A (≥ 80)","B (60–79)","C (40–59)","D (< 40)"],v:[1640,3120,2410,1242],hl:[3]},
+  {k:"split",a:{k:"bullets",h:"O que o topo tem em comum",i:["72% do top 100 em municípios < 50 mil hab.","Funcionam mais de 10h por dia","Tiveram treinamento presencial na ativação"]},b:{k:"bullets",h:"Precisam de ação",i:["CB-3310 · 9 dias sem transação → visita técnica","CB-2981 · limite bloqueado → revisão de limite","CB-1544 · ponto fechado → candidato à retirada do POS"]}}
+],
+funnel:[
+  {k:"title",e:"Funil e conversão · 3T26",t:"Funil de prospecção de novos correspondentes",s:"Maior perda está no primeiro contato: metade dos leads nunca é abordada"},
+  {k:"kpis",i:[["Conversão total","8,3%","lead → ativo"],["Maior perda","−52%","lead → contato","neg"],["Tempo médio","41 dias","lead → ativo"]]},
+  {k:"funnel",h:"Etapas do funil · volume e conversão etapa a etapa",steps:[["Leads mapeados",4820],["Contato realizado",2310],["Visita",1150],["Proposta aceita",790],["Credenciado",642],["Ativo em 30 dias",401]]},
+  {k:"table",h:"Conversão por equipe",c:["Equipe","Leads","Credenciados","Conv. lead → cred."],r:[["Prospecção NE","1.980","318","16,1%"],["Prospecção SE","1.640","196","12,0%"],["Prospecção Sul","1.200","128","10,7%"],["*Total","4.820","642","13,3%"]]},
+  {k:"bullets",h:"Ações para o gargalo",i:["Priorizar leads por potencial (score de município) antes do contato","Disparo de WhatsApp pré-visita para leads frios","Meta semanal de contatos por prospector"]}
+],
+memo:[
+  {k:"title",e:"Memorando",t:"Aprovação: retirada de 312 equipamentos inativos até 31/10"},
+  {k:"memo",f:[["Para","Diretoria de Canais"],["De","Gerência de Operações"],["Data","01/10/2026"],["Assunto","Aprovação: retirada de 312 POS inativos até 31/10"]]},
+  {k:"callout",h:"Em resumo",x:"Solicitamos aprovação para retirar <b>312 POS</b> de pontos sem transações há mais de 90 dias. A ação libera <b>R$ 46,8 mil/mês</b> em comunicação e manutenção, e os equipamentos serão realocados para novos credenciamentos."},
+  {k:"text",h:"Contexto",x:"A inatividade da rede subiu para 11,8% no trimestre. Dos 993 pontos inativos, 312 não transacionam há mais de 90 dias e já receberam duas tentativas de reativação. Cada equipamento custa em média R$ 150/mês."},
+  {k:"bullets",h:"Opções avaliadas",i:["<b>A) Retirar os 312 agora (recomendada)</b> — economia imediata; risco baixo","B) Campanha de reativação de 60 dias — pode recuperar ~15%; custo de R$ 38 mil","C) Manter — R$ 46,8 mil/mês sem retorno"]},
+  {k:"callout",h:"Recomendação",x:"Opção A, com decisão até 08/10 para que a logística execute até 31/10."}
+]
+};
+
+/* ============================================================
+   TIPOS DA ROTINA — Rede de Correspondentes
+   ============================================================ */
+R.push(
+{
+  id:"retirada", nome:"Equipment Retrieval Batch", pt:"Lote de Retirada de Equipamentos", cat:"Rede de Correspondentes",
+  obj:["decidir","acompanhar"],
+  tag:"Acompanha o lote mensal de retirada de POS: quem entra, por quê, quanto economiza e em que pé está cada coleta.",
+  publico:"Gestão de Operações, Logística, Diretoria", tamanho:"1–2 páginas + lista anexa", tom:"Objetivo e operacional",
+  carac:["Critérios de entrada no lote explícitos (dias sem transação, ponto fechado…)","Economia mensal estimada do lote","Status de cada equipamento: aviso, agendado, coletado, realocado","Pendências que travam a coleta"],
+  usar:["Fechamento e aprovação do lote mensal","Acompanhamento semanal das coletas","Prestação de contas da economia gerada"],
+  evitar:["Antes de esgotar as tentativas de reativação","Sem a lista conciliada com o inventário de POS"],
+  estrutura:["h|Lote, posição e critérios de entrada","kpi:4|POS no lote · Economia mensal · Retirados · Pendentes","chart:bar|Equipamentos por motivo de retirada","table:5|Lista do lote: ponto, cidade, dias sem transação, motivo, status","timeline:4|Cronograma: aprovação → aviso → coletas → realocação","callout|Pendências e decisões"],
+  pedidos:["Monte o relatório do lote de retirada de outubro com esta planilha","Quais pontos desta lista atendem ao critério de 90 dias sem transação?","Calcule a economia mensal do lote considerando R$ 150 por equipamento"],
+  dica:"Peça para a IA <b>separar quem atende ao critério de quem é exceção</b> (ex.: ponto com causa técnica). Evita retirar POS de um ponto que só está sem sinal.",
+  prompt:`Atue como analista de operações da rede de correspondentes. Elabore o RELATÓRIO DO LOTE DE RETIRADA DE EQUIPAMENTOS sobre [TEMA], para [PÚBLICO].
+Mês de referência / posição: [PERÍODO]
+
+Estrutura:
+1. Critérios de entrada no lote (ex.: mais de 90 dias sem transação, ponto fechado, descredenciamento, pedido do parceiro).
+2. Indicadores: total de POS no lote, economia mensal estimada (nº de POS × custo mensal por equipamento), quantidade já retirada e pendente (com %).
+3. Gráfico de equipamentos por motivo de retirada.
+4. Lista do lote (tabela): código do ponto, cidade/UF, dias sem transação, motivo, status (aviso enviado, agendado, coletado, realocado).
+5. Exceções: pontos que atendem ao critério mas têm causa técnica ou comercial que justifica mantê-los — com justificativa.
+6. Cronograma: aprovação, aviso aos parceiros, janela de coletas, realocação.
+7. Pendências e decisões necessárias.
+
+Regras:
+- Mostre o cálculo da economia.
+- Não inclua no lote pontos que não atendem aos critérios; liste-os à parte.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados:
+[DADOS]`
+},
+{
+  id:"contacaixa", nome:"Cash Account Position", pt:"Posição de Conta Caixa", cat:"Rede de Correspondentes",
+  obj:["acompanhar","prestar contas"],
+  tag:"Fotografia diária da exposição da rede: uso do limite, quem está acima, há quantos dias e qual a ação para cada caso.",
+  publico:"Gestão de risco, Operações, gestores regionais", tamanho:"1 página", tom:"Técnico e prudente",
+  carac:["Exposição total e uso médio do limite","Distribuição por faixa de uso (< 50%, 50–80%, 80–100%, > 100%)","Lista de quem está acima do limite, com dias acima","Ação definida por regra (recolher, bloquear, escalonar)"],
+  usar:["Acompanhamento diário de limites","Reunião de risco semanal","Base para revisão de limites dos parceiros"],
+  evitar:["Sem regras de ação definidas por faixa","Com saldos ainda não conciliados do dia"],
+  estrutura:["h|Data-base e escopo","kpi:4|Exposição total · Uso médio · Acima do limite · Recolhimentos do dia","chart:bar|Correspondentes por faixa de uso do limite","table:5|Acima do limite: saldo, limite, % de uso, dias acima, ação","bullets:3|Ações e escalonamentos do dia"],
+  pedidos:["Monte a posição de conta caixa de hoje a partir desta extração","Liste os correspondentes acima de 100% do limite há mais de 3 dias","Classifique cada correspondente na faixa de uso e sugira a ação pela regra"],
+  dica:"Informe à IA a <b>régua de ação</b> (ex.: >100% por 1 dia = recolher em D+1; >3 dias = bloquear depósitos e escalonar). Sem a régua, ela improvisa.",
+  prompt:`Atue como analista de risco de correspondentes bancários. Elabore a POSIÇÃO DE CONTA CAIXA sobre [TEMA], para [PÚBLICO].
+Data-base: [PERÍODO]
+
+Estrutura:
+1. Indicadores: exposição total (R$), uso médio do limite (%), quantidade de correspondentes acima do limite (vs dia anterior) e recolhimentos programados.
+2. Distribuição dos correspondentes por faixa de uso do limite: < 50%, 50–80%, 80–100%, > 100%.
+3. Tabela dos que estão acima do limite: código, cidade/UF, saldo, limite, % de uso (saldo ÷ limite), dias consecutivos acima, ação.
+4. Ações e escalonamentos do dia.
+
+Régua de ação (ajuste se necessário):
+- Acima de 100% por 1 a 2 dias → recolhimento em D+1
+- Acima de 100% por 3 dias ou mais → bloqueio de novos depósitos + escalonar para o gestor
+- Acima de 130% → bloqueio imediato
+
+Regras:
+- Mostre o cálculo do % de uso.
+- Ordene a tabela pela gravidade (dias acima e % de uso).
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Dados:
+[DADOS]`
+},
+{
+  id:"visita", nome:"Field Visit Report", pt:"Relatório de Visita de Campo", cat:"Rede de Correspondentes",
+  obj:["prestar contas","investigar"],
+  tag:"Registro estruturado da visita do consultor ao ponto: situação encontrada, causa do problema, combinados e próximos passos.",
+  publico:"Gestor da consultoria, Operações", tamanho:"1 página", tom:"Factual e direto",
+  carac:["Situação em semáforo: operação, equipamento, conformidade, potencial","Indicadores do ponto antes da visita","Constatações separadas dos combinados com o parceiro","Recomendação clara: manter, acompanhar ou retirar"],
+  usar:["Após visita de reativação ou de conformidade","Para decidir se o ponto entra no lote de retirada","Para padronizar o registro entre consultores"],
+  evitar:["Como relato livre sem recomendação","Sem os indicadores do ponto em mãos"],
+  estrutura:["h|Ponto, data, consultor e motivo da visita","rag:4|Operação · Equipamento · Conformidade · Potencial","kpi:3|Transações 90 dias · Score · Fluxo estimado","split:bullets-3+bullets-3|Constatações · Combinados com o parceiro","table:3|Próximas ações (responsável e prazo)","callout|Recomendação: manter, acompanhar ou retirar"],
+  pedidos:["Transforme minhas anotações da visita neste relatório padrão","Escreva a recomendação para este ponto com base no que encontrei","Crie um formulário de visita de campo a partir desta estrutura"],
+  dica:"Cole as anotações do consultor do jeito que vierem (até áudio transcrito). Peça para a IA <b>separar fato, opinião e combinado</b>.",
+  prompt:`Atue como coordenador da equipe de consultores. Transforme as anotações abaixo em um RELATÓRIO DE VISITA DE CAMPO sobre [TEMA], para [PÚBLICO].
+Data da visita: [PERÍODO]
+
+Estrutura:
+1. Cabeçalho: código e cidade do ponto, data, consultor e motivo da visita.
+2. Situação em semáforo (🟢 🟡 🔴) com 1 linha de justificativa: Operação, Equipamento, Conformidade, Potencial comercial.
+3. Indicadores do ponto: transações nos últimos 90 dias (e variação), score/faixa, fluxo estimado.
+4. Constatações (fatos observados) — separadas de opiniões.
+5. Combinados com o parceiro.
+6. Próximas ações: o quê, responsável, prazo.
+7. Recomendação: MANTER, ACOMPANHAR ou RETIRAR — com justificativa em até 3 linhas.
+
+Regras:
+- Separe fato, opinião e combinado.
+- Linguagem objetiva, sem adjetivos desnecessários.
+- Se algum dado estiver faltando, sinalize em vez de inventar.
+
+Anotações da visita:
+[DADOS]`
+}
+);
+
+Object.assign(EX,{
+retirada:[
+  {k:"title",e:"Lote de retirada · Outubro/2026",t:"Lote de outubro: 38% dos equipamentos já coletados",s:"Posição em 20/10/2026 · Critérios: > 90 dias sem transação, ponto fechado, descredenciado ou pedido do parceiro"},
+  {k:"kpis",i:[["POS no lote","312","aprovado em 08/10"],["Economia mensal","R$ 46,8 mil","312 × R$ 150","pos"],["Retirados","118","38% do lote","pos"],["Pendentes","194","62% do lote","neg"]]},
+  {k:"bars",h:"Equipamentos por motivo de retirada",horiz:true,lw:170,l:["Sem transação > 90 dias","Ponto fechado","Pedido do parceiro","Descredenciado"],v:[204,61,29,18],hl:[0]},
+  {k:"table",h:"Lista do lote (extrato)",c:["Ponto","Cidade","Dias sem trans.","Motivo","Status"],r:[["CB-0877","Montes Claros/MG","131","Descredenciado","Coletado"],["CB-1544","Rio Grande/RS","112","Ponto fechado","Coletado"],["CB-1902","Bauru/SP","101","Pedido do parceiro","Agendado 24/10"],["CB-2981","Chapecó/SC","94","Sem transação","Aviso enviado"],["CB-4120","Juazeiro/BA","92","Sem transação","Aviso enviado"]],note:"Exceção: CB-3310 (Pelotas/RS) saiu do lote após visita — causa técnica (chip 2G), não comercial."},
+  {k:"timeline",h:"Cronograma",i:[["08/10","Aprovação",1],["10/10","Aviso aos parceiros",1],["13–31/10","Coletas"],["07/11","Realocação"]]},
+  {k:"callout",h:"Pendências",x:"<b>23 parceiros</b> não responderam ao aviso — reenvio pelos consultores até 22/10. <b>9 POS</b> sem endereço atualizado no cadastro — confirmar com a Logística."}
+],
+contacaixa:[
+  {k:"title",e:"Posição de conta caixa · Data-base 30/09/2026",t:"27 correspondentes acima do limite — 4 a mais que ontem",s:"Base: 8.412 correspondentes ativos · Valores de saldo e limite em R$ mil"},
+  {k:"kpis",i:[["Exposição total","R$ 64,2 mi","▲ 1,1% vs D-1","neg"],["Uso médio do limite","58%","▲ 2 p.p. vs D-1","neg"],["Acima do limite","27","▲ 4 vs D-1","neg"],["Recolhimentos hoje","41","R$ 3,8 mi programados"]]},
+  {k:"bars",h:"Correspondentes por faixa de uso do limite",l:["< 50%","50–80%","80–100%","> 100%"],v:[4980,2610,795,27],hl:[3]},
+  {k:"table",h:"Acima do limite (mais graves)",c:["Ponto","Cidade","Saldo","Limite","% uso","Dias acima","Ação"],r:[["CB-0412","Feira de Santana/BA","412","300","137%","4","Bloqueio de depósitos + escalonar"],["CB-0731","Londrina/PR","141","120","118%","5","Escalonar para gestor"],["CB-0093","Campinas/SP","355","300","118%","3","Bloqueio de depósitos"],["CB-1187","Caruaru/PE","286","250","114%","2","Recolhimento D+1"],["CB-2240","Imperatriz/MA","198","180","110%","1","Recolhimento D+1"]],note:"% uso = saldo ÷ limite. Régua: 1–2 dias → recolher em D+1; 3+ dias → bloquear depósitos e escalonar; > 130% → bloqueio imediato."},
+  {k:"bullets",h:"Ações e escalonamentos do dia",i:["CB-0412 acima de 130%: bloqueio imediato aplicado às 09h","Escalonar CB-0731 e CB-0093 para os gestores regionais (5 e 3 dias acima)","Avaliar aumento de limite para CB-1187: 3ª ocorrência no mês, sem atraso de recolhimento"]}
+],
+visita:[
+  {k:"title",e:"Visita de campo · 22/10/2026",t:"CB-3310 · Pelotas/RS — ponto deve ser mantido: o problema é técnico",s:"Consultor: Rafael · Motivo: 9 dias sem transação e score D"},
+  {k:"rag",i:[["Operação","warn","Aberto, mas operador novo sem treinamento"],["Equipamento","bad","POS sem sinal (chip 2G desativado)"],["Conformidade","ok","Placa e tabela de tarifas expostas"],["Potencial","ok","Único ponto do bairro, fluxo alto"]]},
+  {k:"kpis",i:[["Transações 90 dias","1.240","▼ 38% vs tri anterior","neg"],["Score","9","faixa D","neg"],["Clientes/dia (estimativa)","~60","informado pelo parceiro"]]},
+  {k:"split",a:{k:"bullets",h:"Constatações",i:["POS liga, mas não comunica desde 05/08","Clientes estão sendo mandados para a lotérica a 4 km","Operador contratado em setembro, sem acesso ao treinamento"]},b:{k:"bullets",h:"Combinados com o parceiro",i:["Parceiro mantém o ponto aberto no mesmo horário","Operador fará o treinamento presencial em 28/10","Parceiro avisa o consultor se o POS falhar de novo"]}},
+  {k:"table",h:"Próximas ações",c:["Ação","Resp.","Prazo"],r:[["Trocar o chip para multioperadora 4G","Logística","25/10"],["Treinamento presencial do operador","Rafael","28/10"],["Reavaliar o score após 30 dias","Consultoria","25/11"]]},
+  {k:"callout",h:"Recomendação: MANTER",x:"A queda tem causa técnica, não comercial. Retirar o CB-3310 do lote de retirada de outubro e acompanhar por 30 dias."}
+]
+});
+
+DECISION.push(["Preciso decidir quais POS retirar","retirada"]);
+
+/* Checagens específicas usadas no prompt de revisão */
+const REV={
+  financial:"confira se Receita − Despesas = Resultado em todas as colunas e se a ponte de resultado fecha do orçado ao real.",
+  forecast:"verifique se a soma mensal da projeção bate com o total de cada cenário e se as premissas sustentam os números.",
+  scorecard:"confira se os indicadores foram normalizados antes da ponderação e se os pesos somam 100%.",
+  businesscase:"recalcule ROI e payback nos três cenários e verifique se o custo recorrente foi descontado da economia.",
+  risk:"verifique se o nível de cada risco corresponde a P × I na escala definida.",
+  benchmark:"recalcule o score ponderado de cada opção e confirme que os pesos somam 100%.",
+  funnel:"recalcule as conversões etapa a etapa e acumulada a partir dos volumes.",
+  retirada:"confira se todos os pontos do lote atendem aos critérios e se a economia = nº de POS × custo unitário.",
+  contacaixa:"recalcule % de uso (saldo ÷ limite) e confira se a ação de cada linha segue a régua definida.",
+  visita:"confirme que a recomendação é coerente com as constatações e que nenhuma opinião foi apresentada como fato.",
+  rca:"verifique se a causa raiz é sustentada pelos dados e se está separada de sintomas e causas contribuintes.",
+  audit:"confira se cada achado tem critério e evidência e se o índice de conformidade = conformes ÷ verificados."
+};
+function reviewPrompt(r){
+  const secs=r.estrutura.map(s=>(s.split("|")[1]||"").trim()).filter(Boolean);
+  return `Revise criticamente o relatório "${r.pt}" que você gerou acima, antes de eu usar com [PÚBLICO].
+
+Checagens:
+1. Contas: recalcule todos os totais, variações e percentuais. Liste cada divergência com o valor correto.
+2. Rastreabilidade: aponte todo número que não veio dos dados fornecidos (estimado, arredondado ou inventado).
+3. Estrutura: confira se o relatório tem estas seções, nesta ordem:
+${secs.map((s,i)=>`   ${i+1}. ${s}`).join("\n")}
+   Aponte o que faltou ou ficou fora de ordem.
+4. Títulos: cada título deve comunicar uma conclusão, não só descrever o conteúdo. Reescreva os que não fizerem isso.
+5. Coerência: texto e números se contradizem em algum ponto? (ex.: "cresceu" com variação negativa)
+6. Clareza: aponte jargões, siglas sem explicação e parágrafos longos demais para o público.${REV[r.id]?`
+7. Checagem específica deste tipo: ${REV[r.id]}`:""}
+
+Formato da resposta:
+- Primeiro, uma tabela "Problema | Onde | Correção". Se um item estiver correto, escreva "OK" para ele.
+- Depois, a versão corrigida completa do relatório.`;
+}
+function dataPrompt(r){
+  const secs=r.estrutura.map(s=>(s.split("|")[1]||"").trim()).filter(Boolean);
+  return `Gere uma base de dados FICTÍCIA e realista para eu testar o relatório "${r.pt}" sobre [TEMA].
+Período: [PERÍODO]
+
+Requisitos:
+- Formato: tabela CSV com separador ";" pronta para colar em planilha (Excel em português).
+- Inclua todas as colunas necessárias para montar estas seções:
+${secs.map(s=>`   • ${s}`).join("\n")}
+- Entre 30 e 60 linhas, com variação realista: alguns casos bons, alguns ruins e 2 ou 3 outliers.
+- Datas no formato dd/mm/aaaa, valores com vírgula decimal.
+- Use códigos fictícios (ex.: CB-0001, Parceiro 01). Não use nomes reais, CPF, CNPJ ou contas.
+- Os números precisam ser coerentes entre si (totais batem, percentuais conferem).
+
+Depois da tabela, liste cada coluna com uma linha de descrição.`;
+}
+
+MODS.push({id:"modelo",l:"Seguir modelo HTML anexo",t:"Use o arquivo HTML anexado como modelo visual e de estrutura: mantenha layout, cores, tipografia e tipos de gráfico, substituindo apenas os dados e os textos pelos meus."});
+
+/* Baixa o exemplo atual como HTML autocontido */
+function downloadEx(id,style){
+  const r=R.find(x=>x.id===id);
+  const css=document.querySelector("style").textContent;
+  const a=css.indexOf("/* =========================================================\n   EXEMPLOS"),b=css.indexOf("/* ---------- Responsive");
+  const fonts=document.querySelector('link[href*="fonts.googleapis.com/css2"]').outerHTML;
+  const html=`<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${r.pt} — modelo ${STYLES[style].n}</title>
+<!--
+  Modelo gerado na "Cola de Relatórios" · Tipo: ${r.pt} · Estilo: ${STYLES[style].n}
+  Dados FICTÍCIOS. Para reaproveitar, anexe este arquivo na conversa com a IA e peça:
+  "Use este HTML como modelo visual e de estrutura e substitua os dados pelos que vou colar."
+-->
+${fonts}
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#e9e7e2;padding:32px 16px;font-family:"IBM Plex Sans",system-ui,sans-serif}
+.ex{max-width:960px;margin:0 auto}
+@media print{body{background:#fff;padding:0}.ex{box-shadow:none;max-width:none}}
+@media (max-width:640px){.ex{padding:22px 18px 16px;gap:16px}.s-corporate .x-title{margin:0 -18px;padding:18px}.x-split,.x-swot,.x-memo{grid-template-columns:1fr}.x-t{font-size:22px}}
+${css.slice(a,b)}
+</style>
+</head>
+<body>
+${renderEx(id,style)}
+</body>
+</html>`;
+  const url=URL.createObjectURL(new Blob([html],{type:"text/html;charset=utf-8"}));
+  const el=document.createElement("a");el.href=url;el.download=`modelo-${id}-${style}.html`;document.body.appendChild(el);el.click();el.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+
+/* ============================================================
+   ESTADO
+   ============================================================ */
+const store={
+  get(k,d){try{const v=localStorage.getItem("cola-rel:"+k);return v?JSON.parse(v):d}catch(e){return d}},
+  set(k,v){try{localStorage.setItem("cola-rel:"+k,JSON.stringify(v))}catch(e){}}
+};
+const state={
+  q:"",cat:"Todos",goal:null,onlyFav:false,
+  favs:new Set(store.get("favs",[])),
+  vars:Object.assign({tema:"",publico:"",periodo:"",dados:"",formato:"html"},store.get("vars",{})),
+  mods:new Set(store.get("mods",[])),
+  style:STYLES[store.get("style","modern")]?store.get("style","modern"):"modern",
+  styleOn:store.get("styleOn",true),
+  tab:"ex",ptab:"rel",open:null,list:[]
+};
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const norm=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const SWATCH={minimal:"#141414",modern:"#5b5bd6",corporate:"#0b2a4a",consulting:"#00a3a1",editorial:"#b3261e",dark:"#39d0d8"};
+
+/* ============================================================
+   FILTROS
+   ============================================================ */
+const cats=["Todos",...new Set(R.map(r=>r.cat))];
+$("#catChips").insertAdjacentHTML("beforeend",cats.map(c=>`<button class="chip" data-cat="${c}" aria-pressed="${c==="Todos"}">${c}</button>`).join(""));
+$("#goalChips").insertAdjacentHTML("beforeend",Object.entries(GOALS).map(([k,v])=>`<button class="chip" data-goal="${k}" aria-pressed="false">${v}</button>`).join(""));
+const styleChipsHTML=()=>Object.entries(STYLES).map(([k,s])=>`<button class="chip" data-style="${k}" aria-pressed="${state.style===k}"><i class="dot" style="background:${SWATCH[k]}"></i>${s.n}</button>`).join("");
+$("#styleChips").insertAdjacentHTML("beforeend",`<span id="styleChipsIn" style="display:contents">${styleChipsHTML()}</span>`);
+
+$("#catChips").addEventListener("click",e=>{const b=e.target.closest("[data-cat]");if(!b)return;state.cat=b.dataset.cat;$$("[data-cat]").forEach(x=>x.setAttribute("aria-pressed",x===b));render()});
+$("#goalChips").addEventListener("click",e=>{const b=e.target.closest("[data-goal]");if(!b)return;state.goal=state.goal===b.dataset.goal?null:b.dataset.goal;$$("[data-goal]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.goal===state.goal));render()});
+$("#favFilter").addEventListener("click",e=>{state.onlyFav=!state.onlyFav;e.currentTarget.setAttribute("aria-pressed",state.onlyFav);render()});
+$("#q").addEventListener("input",e=>{state.q=e.target.value;render()});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-style]");if(b)setStyle(b.dataset.style)});
+
+function filtered(){
+  const q=norm(state.q.trim());
+  return R.filter(r=>{
+    if(state.cat!=="Todos"&&r.cat!==state.cat)return false;
+    if(state.goal&&!r.obj.includes(state.goal))return false;
+    if(state.onlyFav&&!state.favs.has(r.id))return false;
+    if(!q)return true;
+    const hay=norm([r.nome,r.pt,r.cat,r.tag,r.obj.join(" "),r.carac.join(" "),r.usar.join(" "),r.pedidos.join(" "),r.prompt].join(" "));
+    return q.split(/\s+/).every(t=>hay.includes(t));
+  });
+}
+
+/* ============================================================
+   GRADE E GALERIA DE ESTILOS
+   ============================================================ */
+function render(){
+  const list=filtered();state.list=list;
+  $("#count").textContent=`${list.length} de ${R.length} tipos`;
+  $("#empty").hidden=list.length>0;
+  $("#grid").innerHTML=list.map(r=>`
+    <article class="card" tabindex="0" data-id="${r.id}" aria-label="${esc(r.nome)}">
+      <div class="thumb">${renderEx(r.id,state.style)}</div>
+      <div class="cbody">
+        <div class="cat">${r.cat}</div>
+        <h3>${r.nome}</h3>
+        <div class="pt">${r.pt}</div>
+        <p>${r.tag}</p>
+        <div class="cfoot"><span>${r.tamanho}</span><button class="fav ${state.favs.has(r.id)?"on":""}" data-fav="${r.id}" aria-label="Favoritar">${state.favs.has(r.id)?"★":"☆"}</button></div>
+      </div>
+    </article>`).join("");
+}
+function renderStyles(){
+  $("#styles").innerHTML=Object.entries(STYLES).map(([k,s])=>`
+    <div class="scard ${state.style===k?"cur":""}">
+      <div class="thumb">${renderEx("executive",k)}</div>
+      <div class="sbody">
+        <h3>${s.n}</h3>
+        <p>${s.d}</p>
+        <ul>${s.traits.map(t=>`<li>${t}</li>`).join("")}</ul>
+        <div class="ideal">Ideal para: ${s.ideal}</div>
+        <div class="acts">
+          <button class="${state.style===k?"primary":"ghost"}" data-style="${k}">${state.style===k?"✓ Estilo atual":"Usar este estilo"}</button>
+          <button class="ghost" data-copystyle="${k}">Copiar descrição</button>
+        </div>
+      </div>
+    </div>`).join("");
+}
+$("#styles").addEventListener("click",e=>{const b=e.target.closest("[data-copystyle]");if(b)copy(STYLES[b.dataset.copystyle].prompt,"Descrição do estilo copiada")});
+
+function setStyle(k){
+  if(!STYLES[k]||k===state.style&&!state.open){return}
+  state.style=k;store.set("style",k);
+  $("#styleChipsIn").innerHTML=styleChipsHTML();
+  render();renderStyles();
+  if(state.open){
+    $$(".modal [data-style]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.style===k));
+    const st=$("#stage");if(st)st.innerHTML=renderEx(state.open,k);
+    const sn=$("#styleNote");if(sn)sn.innerHTML=styleNote();
+    const sel=$("#modal select[data-var=style]");if(sel)sel.value=k;
+    refreshPrompt();
+  }
+}
+
+$("#grid").addEventListener("click",e=>{
+  const f=e.target.closest("[data-fav]");
+  if(f){e.stopPropagation();toggleFav(f.dataset.fav);return}
+  const c=e.target.closest(".card");if(c)openModal(c.dataset.id);
+});
+$("#grid").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.classList.contains("card"))openModal(e.target.dataset.id)});
+function toggleFav(id){
+  state.favs.has(id)?state.favs.delete(id):state.favs.add(id);store.set("favs",[...state.favs]);render();
+  const b=$("#modal [data-act=fav]");if(b&&state.open===id)b.textContent=state.favs.has(id)?"★ Favorito":"☆ Favoritar";
+}
+
+$("#decision").innerHTML=DECISION.map(([t,id])=>`<button data-open="${id}">${t}<span>${R.find(r=>r.id===id).nome} →</span></button>`).join("");
+$("#decision").addEventListener("click",e=>{const b=e.target.closest("[data-open]");if(b)openModal(b.dataset.open)});
+
+/* ============================================================
+   PROMPT
+   ============================================================ */
+function buildPrompt(r,html){
+  const v=state.vars;
+  const map={"[TEMA]":v.tema,"[PÚBLICO]":v.publico,"[PERÍODO]":v.periodo,"[DADOS]":v.dados};
+  let txt,styleLine="";
+  if(state.ptab==="rev")txt=reviewPrompt(r);
+  else if(state.ptab==="dados")txt=dataPrompt(r);
+  else{
+    txt=r.prompt;const extras=[];
+    MODS.forEach(m=>{if(state.mods.has(m.id))extras.push("- "+m.t)});
+    if(extras.length)txt+="\n\nInstruções adicionais:\n"+extras.join("\n");
+    styleLine=state.styleOn&&v.formato!=="email"&&v.formato!=="xlsx"?STYLES[state.style].prompt:"";
+    if(styleLine)txt+="\n\n@@STY@@";
+    txt+="\n\nFormato de saída: "+FORMATOS[v.formato];
+  }
+  if(!html)return txt.replace("@@STY@@",styleLine).replace(/\[(TEMA|PÚBLICO|PERÍODO|DADOS)\]/g,m=>map[m]?.trim()||m);
+  return esc(txt).replace("@@STY@@",`<span class="sty">${esc(styleLine)}</span>`).replace(/\[(TEMA|PÚBLICO|PERÍODO|DADOS)\]/g,m=>map[m]?.trim()?`<span class="fill">${esc(map[m].trim())}</span>`:`<mark>${m}</mark>`);
+}
+const PTABS={rel:["Relatório","Cole na IA para gerar o relatório."],rev:["Revisão","Depois que a IA responder, cole este na mesma conversa."],dados:["Dados de teste","Gera uma base fictícia para testar o relatório antes de usar dados reais."]};
+function refreshPrompt(){
+  const r=R.find(x=>x.id===state.open);const out=$("#promptOut");if(!r||!out)return;
+  out.innerHTML=buildPrompt(r,true);
+  $$("#modal [data-ptab]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.ptab===state.ptab));
+  const ph=$("#ptabHelp");if(ph)ph.textContent=PTABS[state.ptab][1];
+  const missing=["tema","publico","periodo","dados"].filter(k=>!state.vars[k].trim()).length;
+  $("#pStatus").textContent=missing?`${missing} campo(s) em branco — ficam como [MARCADOR]`:"Prompt completo ✓";
+}
+const styleNote=()=>`Estilo <b>${STYLES[state.style].n}</b> — ${STYLES[state.style].d} · <i>dados fictícios</i>`;
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+function openModal(id){
+  const r=R.find(x=>x.id===id);if(!r)return;
+  state.open=id;
+  const v=state.vars,labels=r.estrutura.map(s=>s.split("|")[1]||"");
+  $("#modal").innerHTML=`
+  <div class="mhead">
+    <div class="mtop">
+      <div>
+        <div class="eyebrow">${r.cat} · ${r.obj.map(o=>GOALS[o]).join(" · ")}</div>
+        <h2 id="mTitle">${r.nome}</h2>
+        <div class="pt">${r.pt} — ${r.tag}</div>
+      </div>
+      <div class="mnav">
+        <button class="iconbtn" data-act="fav">${state.favs.has(id)?"★ Favorito":"☆ Favoritar"}</button>
+        <button class="iconbtn" data-act="prev" title="Anterior (←)">←</button>
+        <button class="iconbtn" data-act="next" title="Próximo (→)">→</button>
+        <button class="iconbtn" data-act="close" title="Fechar (Esc)">✕</button>
+      </div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="ex">Exemplo com dados</button>
+      <button class="tab" role="tab" data-tab="guia">Estrutura e quando usar</button>
+      <button class="tab" role="tab" data-tab="prompt">Prompt para a IA</button>
+    </div>
+  </div>
+  <div class="mbody" id="mbody">
+    <section class="pane" data-pane="ex">
+      <div class="stylebar"><span class="lbl">Estilo visual</span>${Object.entries(STYLES).map(([k,s])=>`<button class="chip" data-style="${k}" aria-pressed="${state.style===k}"><i class="dot" style="background:${SWATCH[k]}"></i>${s.n}</button>`).join("")}</div>
+      <div class="snote"><span id="styleNote">${styleNote()}</span><button class="ghost" data-act="dl" title="Baixa o exemplo como HTML para usar de modelo">⬇ Baixar este modelo (.html)</button></div>
+      <div class="stage" id="stage">${renderEx(id,state.style)}</div>
+    </section>
+
+    <section class="pane" data-pane="guia">
+      <div class="meta">
+        <div><small>Público</small><span>${r.publico}</span></div>
+        <div><small>Tamanho</small><span>${r.tamanho}</span></div>
+        <div><small>Tom</small><span>${r.tom}</span></div>
+      </div>
+      <div class="cols">
+        <div>
+          <div class="sec"><h4>Estrutura</h4><div class="wfbox">${wireframe(r.estrutura,true)}</div><ol class="anno">${labels.map(l=>`<li>${l}</li>`).join("")}</ol></div>
+        </div>
+        <div>
+          <div class="sec"><h4>Características</h4><ul class="lst">${r.carac.map(x=>`<li>${x}</li>`).join("")}</ul></div>
+          <div class="sec"><h4>Quando usar</h4><ul class="lst yes">${r.usar.map(x=>`<li>${x}</li>`).join("")}</ul></div>
+          <div class="sec"><h4>Quando evitar</h4><ul class="lst no">${r.evitar.map(x=>`<li>${x}</li>`).join("")}</ul></div>
+          <div class="sec"><div class="tip">💡 ${r.dica}</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pane" data-pane="prompt">
+      <div class="pgrid">
+        <div>
+          <div class="sec">
+            <h4>Pedidos rápidos</h4>
+            <div class="asks">${r.pedidos.map(p=>`<div class="ask"><span>“${p}”</span><button class="ghost" data-copy="${esc(p)}">Copiar</button></div>`).join("")}</div>
+          </div>
+          <div class="sec">
+            <h4>Monte o seu prompt</h4>
+            <div class="builder">
+              <div class="bfields">
+                <label>Tema<input data-var="tema" value="${esc(v.tema)}" placeholder="ex.: performance da rede no Nordeste"></label>
+                <label>Público<input data-var="publico" value="${esc(v.publico)}" placeholder="ex.: diretoria regional"></label>
+                <label>Período<input data-var="periodo" value="${esc(v.periodo)}" placeholder="ex.: 3º trimestre de 2026"></label>
+                <label>Formato de saída<select data-var="formato">${Object.entries(FORMATO_LABEL).map(([k,l])=>`<option value="${k}" ${v.formato===k?"selected":""}>${l}</option>`).join("")}</select></label>
+                <label>Estilo visual<select data-var="style">${Object.entries(STYLES).map(([k,s])=>`<option value="${k}" ${state.style===k?"selected":""}>${s.n}</option>`).join("")}</select></label>
+                <label>No prompt<button type="button" class="chip toggle" data-act="styleOn" aria-pressed="${state.styleOn}" style="justify-content:center;padding:8px 10px">${state.styleOn?"✓ Incluir estilo":"Estilo desligado"}</button></label>
+                <label class="full">Dados (cole a tabela ou descreva as colunas)<textarea data-var="dados" placeholder="Cole os dados aqui — ou deixe em branco e anexe o arquivo na conversa com a IA">${esc(v.dados)}</textarea></label>
+              </div>
+              <div class="mods"><span class="lbl">Modificadores</span>${MODS.map(m=>`<button class="chip" data-mod="${m.id}" aria-pressed="${state.mods.has(m.id)}" title="${esc(m.t)}">${m.l}</button>`).join("")}</div>
+            </div>
+          </div>
+        </div>
+        <div class="pout">
+          <div class="ptabs">${Object.entries(PTABS).map(([k,[l]])=>`<button class="seg" data-ptab="${k}" aria-pressed="${state.ptab===k}">${k==="rel"?"1. ":k==="rev"?"2. ":"⚗ "}${l}</button>`).join("")}</div>
+          <div class="ptabhelp" id="ptabHelp"></div>
+          <pre class="prompt" id="promptOut"></pre>
+          <div class="bbar"><small id="pStatus"></small><div style="display:flex;gap:8px"><button class="ghost" data-act="clear">Limpar campos</button><button class="primary" data-act="copy">Copiar prompt</button></div></div>
+        </div>
+      </div>
+    </section>
+  </div>`;
+  setTab(state.tab);
+  refreshPrompt();
+  const ov=$("#overlay");ov.classList.add("on");ov.setAttribute("aria-hidden","false");
+  document.body.classList.add("lock");
+  history.replaceState(null,"","#"+id);
+}
+function setTab(t){
+  state.tab=t;
+  $$(".modal [data-tab]").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));
+  $$(".modal [data-pane]").forEach(p=>p.hidden=p.dataset.pane!==t);
+  const mb=$("#mbody");if(mb)mb.scrollTop=0;
+}
+function closeModal(){
+  const ov=$("#overlay");ov.classList.remove("on");ov.setAttribute("aria-hidden","true");
+  document.body.classList.remove("lock");state.open=null;history.replaceState(null,""," ");
+}
+function step(dir){
+  const list=state.list.length?state.list:R;
+  let i=list.findIndex(r=>r.id===state.open);
+  openModal(list[(i<0?0:(i+dir+list.length)%list.length)].id);
+}
+
+$("#overlay").addEventListener("mousedown",e=>{if(e.target.id==="overlay")closeModal()});
+$("#modal").addEventListener("click",e=>{
+  const tb=e.target.closest("[data-tab]");if(tb){setTab(tb.dataset.tab);return}
+  const pt=e.target.closest("[data-ptab]");if(pt){state.ptab=pt.dataset.ptab;refreshPrompt();return}
+  const cp=e.target.closest("[data-copy]");if(cp){copy(cp.dataset.copy,"Pedido copiado");return}
+  const md=e.target.closest("[data-mod]");
+  if(md){const id=md.dataset.mod;state.mods.has(id)?state.mods.delete(id):state.mods.add(id);md.setAttribute("aria-pressed",state.mods.has(id));store.set("mods",[...state.mods]);refreshPrompt();return}
+  const a=e.target.closest("[data-act]");if(!a)return;
+  const act=a.dataset.act;
+  if(act==="close")closeModal();
+  if(act==="prev")step(-1);
+  if(act==="next")step(1);
+  if(act==="fav")toggleFav(state.open);
+  if(act==="copy"){copy(buildPrompt(R.find(x=>x.id===state.open),false),state.ptab==="rev"?"Prompt de revisão copiado":state.ptab==="dados"?"Prompt de dados copiado":"Prompt copiado — cole na IA")}
+  if(act==="dl"){downloadEx(state.open,state.style);toast("Modelo baixado")}
+  if(act==="styleOn"){state.styleOn=!state.styleOn;store.set("styleOn",state.styleOn);a.setAttribute("aria-pressed",state.styleOn);a.textContent=state.styleOn?"✓ Incluir estilo":"Estilo desligado";refreshPrompt()}
+  if(act==="clear"){
+    state.vars={tema:"",publico:"",periodo:"",dados:"",formato:state.vars.formato};store.set("vars",state.vars);
+    $$("#modal [data-var]").forEach(el=>{if(["tema","publico","periodo","dados"].includes(el.dataset.var))el.value=""});refreshPrompt();
+  }
+});
+$("#modal").addEventListener("input",e=>{
+  const k=e.target.dataset.var;if(!k)return;
+  if(k==="style"){setStyle(e.target.value);return}
+  state.vars[k]=e.target.value;store.set("vars",state.vars);refreshPrompt();
+});
+
+/* ============================================================
+   UTILITÁRIOS
+   ============================================================ */
+function copy(text,msg){
+  const done=()=>toast(msg);
+  if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(text).then(done,()=>fallback(text,done));else fallback(text,done);
+}
+function fallback(text,done){const t=document.createElement("textarea");t.value=text;t.style.position="fixed";t.style.opacity="0";document.body.appendChild(t);t.select();try{document.execCommand("copy");done()}catch(e){toast("Não foi possível copiar")}t.remove()}
+let tt;function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("on"),1800)}
+
+document.addEventListener("keydown",e=>{
+  const typing=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+  if(e.key==="Escape"&&state.open){closeModal();return}
+  if(typing)return;
+  if(e.key==="/"&&!state.open){e.preventDefault();$("#q").focus()}
+  if(state.open&&e.key==="ArrowRight")step(1);
+  if(state.open&&e.key==="ArrowLeft")step(-1);
+});
+const savedTheme=store.get("theme",null);
+if(savedTheme)document.documentElement.dataset.theme=savedTheme;
+$("#themeBtn").addEventListener("click",()=>{
+  const cur=document.documentElement.dataset.theme||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+  const nx=cur==="dark"?"light":"dark";document.documentElement.dataset.theme=nx;store.set("theme",nx);
+});
+
+render();renderStyles();
+if(location.hash){const id=location.hash.slice(1);if(R.some(r=>r.id===id))openModal(id)}
+
+</script>
+</body>
+</html>
