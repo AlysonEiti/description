@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual · Book Executivo de Indicadores</title>
+<!-- Arquivo único: abre sem internet (as fontes do Google são opcionais; sem elas, usa as do sistema). -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400..600&family=Source+Sans+3:wght@400..700&display=swap">
+<style>
+  :root {
+    --fundo: #F8FAFC; --superficie: #FFFFFF; --borda: #E2E8F0; --texto: #020617; --texto-2: #475569; --texto-3: #64748B;
+    --azul: #0369A1; --azul-fundo: #E0F2FE; --topo: #0F172A; --marca: #CC092F;
+    --verde: #15803D; --verde-fundo: #DCFCE7; --laranja: #C2410C; --laranja-fundo: #FFEDD5;
+    --vermelho: #B91C1C; --vermelho-fundo: #FEE2E2; --neutro: #F1F5F9; --codigo: #0F172A;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 16px; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { margin: 0; background: var(--fundo); color: var(--texto); font: 15px/1.55 "Source Sans 3", "Segoe UI", system-ui, sans-serif; }
+  h1, h2, h3 { font-family: Lexend, "Segoe UI", system-ui, sans-serif; font-weight: 500; line-height: 1.25; margin: 0; }
+  a { color: var(--azul); }
+  code, pre { font-family: Consolas, "Cascadia Mono", ui-monospace, monospace; font-size: 13px; }
+  code { background: var(--neutro); border: 1px solid var(--borda); border-radius: 4px; padding: 0 4px; }
+  pre { background: var(--codigo); color: #E2E8F0; border-radius: 6px; padding: 12px 14px; overflow-x: auto; line-height: 1.5; margin: 8px 0 12px; }
+  pre code { background: none; border: 0; padding: 0; color: inherit; }
+  pre .c { color: #94A3B8; }
+
+  .topo { background: var(--topo); color: #F8FAFC; border-top: 3px solid var(--marca); }
+  .topo__in { max-width: 1180px; margin: 0 auto; padding: 18px 16px; display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; justify-content: space-between; }
+  .topo h1 { font-size: 22px; }
+  .topo p { margin: 2px 0 0; color: #94A3B8; font-size: 14px; }
+  .topo .versao { font-size: 13px; color: #94A3B8; }
+
+  .grade { max-width: 1180px; margin: 0 auto; padding: 20px 16px 48px; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 24px; align-items: start; }
+  nav.indice { position: sticky; top: 16px; font-size: 14px; }
+  nav.indice p { font-weight: 600; color: var(--texto-2); text-transform: uppercase; letter-spacing: .04em; font-size: 12px; margin: 0 0 6px; }
+  nav.indice ol { list-style: none; margin: 0; padding: 0; counter-reset: i; }
+  nav.indice li { counter-increment: i; }
+  nav.indice a { display: flex; gap: 8px; padding: 5px 8px; border-radius: 4px; color: var(--texto); text-decoration: none; }
+  nav.indice a::before { content: counter(i); color: var(--texto-3); min-width: 14px; }
+  nav.indice a:hover { background: var(--neutro); }
+
+  main { min-width: 0; }
+  section { background: var(--superficie); border: 1px solid var(--borda); border-radius: 8px; padding: 18px 20px; margin-bottom: 16px; }
+  section > h2 { font-size: 19px; display: flex; gap: 10px; align-items: baseline; margin-bottom: 4px; }
+  section > h2 .n { color: var(--azul); font-size: 15px; }
+  section > p.sub { color: var(--texto-2); margin: 0 0 12px; }
+  h3 { font-size: 15px; font-weight: 600; margin: 18px 0 6px; }
+  p { margin: 0 0 10px; }
+  ul, ol { margin: 0 0 10px; padding-left: 20px; }
+  li { margin: 2px 0; }
+
+  .tabela { width: 100%; border-collapse: collapse; font-size: 14px; margin: 6px 0 12px; }
+  .tabela th, .tabela td { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--borda); }
+  .tabela thead th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--texto-2); background: var(--neutro); font-weight: 600; }
+  .tabela td:first-child { font-weight: 600; white-space: nowrap; }
+  .tabela td.livre { white-space: normal; }
+  .rolar { overflow-x: auto; }
+
+  .passos { list-style: none; padding: 0; counter-reset: p; display: grid; gap: 8px; }
+  .passos li { counter-increment: p; display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; }
+  .passos li::before { content: counter(p); width: 24px; height: 24px; border-radius: 50%; background: var(--azul); color: #fff; font: 600 13px/24px Lexend, system-ui, sans-serif; text-align: center; }
+
+  .nota { display: flex; gap: 10px; border: 1px solid; border-radius: 6px; padding: 10px 12px; margin: 8px 0 12px; font-size: 14px; }
+  .nota b { white-space: nowrap; }
+  .nota--info { background: var(--azul-fundo); border-color: #BAE6FD; }
+  .nota--alerta { background: var(--laranja-fundo); border-color: #FED7AA; }
+
+  .selo { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; padding: 1px 8px; border-radius: 4px; white-space: nowrap; }
+  .selo::before { font-weight: 700; }
+  .s-meta { background: var(--verde-fundo); color: var(--verde); } .s-meta::before { content: "✓"; }
+  .s-atencao { background: var(--laranja-fundo); color: var(--laranja); } .s-atencao::before { content: "!"; }
+  .s-fora { background: var(--vermelho-fundo); color: var(--vermelho); } .s-fora::before { content: "×"; }
+  .s-sem { background: var(--neutro); color: var(--texto-2); } .s-sem::before { content: "–"; }
+  .s-melhor { background: var(--verde-fundo); color: var(--verde); } .s-melhor::before { content: "↗"; }
+  .s-estavel { background: var(--neutro); color: var(--texto-2); } .s-estavel::before { content: "→"; }
+  .s-pior { background: var(--laranja-fundo); color: var(--laranja); } .s-pior::before { content: "↘"; }
+  kbd { font-family: inherit; font-size: 12px; font-weight: 600; border: 1px solid var(--borda); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--superficie); }
+
+  .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .cartao { border: 1px solid var(--borda); border-radius: 6px; padding: 12px 14px; }
+  .cartao h3 { margin-top: 0; }
+
+  footer { color: var(--texto-3); font-size: 13px; text-align: center; margin-top: 8px; }
+
+  @media (max-width: 860px) {
+    .grade { grid-template-columns: 1fr; }
+    nav.indice { position: static; background: var(--superficie); border: 1px solid var(--borda); border-radius: 8px; padding: 12px; }
+    .duas { grid-template-columns: 1fr; }
+    section { padding: 16px; }
+    .tabela td:first-child { white-space: normal; }
+  }
+
+  @media print {
+    @page { size: A4; margin: 14mm 12mm; }
+    body { background: #fff; font-size: 11pt; }
+    .topo { background: #fff; color: var(--texto); border-top: 0; border-bottom: 2px solid var(--marca); }
+    .topo p, .topo .versao { color: var(--texto-2); }
+    .grade { display: block; padding: 8px 0 0; }
+    nav.indice { display: none; }
+    section { border: 0; padding: 0; margin: 0 0 14px; break-inside: auto; }
+    section > h2 { break-after: avoid; border-bottom: 1px solid var(--borda); padding-bottom: 4px; }
+    h3, .tabela thead { break-after: avoid; }
+    tr, .nota, pre, .cartao { break-inside: avoid; }
+    pre { background: var(--neutro); color: var(--texto); border: 1px solid var(--borda); white-space: pre-wrap; }
+    pre .c { color: var(--texto-2); }
+    a { color: var(--texto); text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo__in">
+    <div>
+      <h1>Manual do Book Executivo de Indicadores</h1>
+      <p>Bradesco Expresso · Diretoria de Correspondentes · como usar, cadastrar indicadores e escrever a consulta SQL</p>
+    </div>
+    <span class="versao">Versão 1.7 · outubro de 2026</span>
+  </div>
+</header>
+
+<div class="grade">
+<nav class="indice" aria-label="Neste manual">
+  <p>Neste manual</p>
+  <ol>
+    <li><a href="#visao">Visão rápida</a></li>
+    <li><a href="#usar">Usando o book</a></li>
+    <li><a href="#regras">Como cada número é julgado</a></li>
+    <li><a href="#cadastro">Cadastro: passo a passo</a></li>
+    <li><a href="#assunto">Campos do assunto</a></li>
+    <li><a href="#indicador">Campos do indicador</a></li>
+    <li><a href="#consulta">A consulta SQL</a></li>
+    <li><a href="#exemplos">Exemplos de consulta</a></li>
+    <li><a href="#problemas">Problemas comuns</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- 1 -->
+<section id="visao">
+  <h2><span class="n">1</span>Visão rápida</h2>
+  <p class="sub">O book mostra, mês a mês, os indicadores de cada área: se bateram a meta, para onde estão indo e o que precisa de atenção.</p>
+  <div class="rolar"><table class="tabela">
+    <thead><tr><th>Nível</th><th>O que é</th><th>Exemplo</th></tr></thead>
+    <tbody>
+      <tr><td>Área</td><td class="livre">Agrupa os assuntos. Vira um filtro no painel.</td><td class="livre">Operações</td></tr>
+      <tr><td>Assunto</td><td class="livre">Um tema com responsável, descrição, comentários e ações. É um cartão no painel e um slide na apresentação.</td><td class="livre">Terminais</td></tr>
+      <tr><td>Indicador</td><td class="livre">Um número mensal com unidade, meta e uma consulta SQL que traz os valores.</td><td class="livre">Disponibilidade (%)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="rolar"><table class="tabela">
+    <thead><tr><th>Quem</th><th>Pode</th></tr></thead>
+    <tbody>
+      <tr><td>Qualquer pessoa com o link</td><td class="livre">Ver o painel, o detalhe, a apresentação e imprimir.</td></tr>
+      <tr><td>Quem entrou (botão <b>Entrar</b>)</td><td class="livre">Comentar o mês de um assunto. Entre com o código funcional e a senha de rede.</td></tr>
+      <tr><td>Quem tem acesso ao cadastro</td><td class="livre">Criar, alterar e remover assuntos e indicadores, escrever as consultas e escolher o que entra na apresentação. O botão <b>Cadastro</b> aparece no topo.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 2 -->
+<section id="usar">
+  <h2><span class="n">2</span>Usando o book</h2>
+  <div class="duas">
+    <div class="cartao">
+      <h3>Painel</h3>
+      <ul>
+        <li><b>Período</b> (canto superior direito): troca o mês do book inteiro.</li>
+        <li><b>Placar</b>: quantos números estão na meta, em atenção, fora da meta ou sem dado; e quantos melhoram, estão estáveis ou pioram.</li>
+        <li><b>Área</b> e <b>Destacar</b>: filtram os assuntos e realçam os números que melhoram ou pioram.</li>
+        <li><b>Pontos de atenção</b>: a lista do que pede cuidado no mês.</li>
+        <li><b>Histórico mês a mês</b>: o placar dos últimos 12 ou 24 meses, com planilha.</li>
+      </ul>
+    </div>
+    <div class="cartao">
+      <h3>Detalhe do assunto (<b>Ver detalhe</b>)</h3>
+      <ul>
+        <li>Um gráfico por indicador (6, 12 ou 24 meses; dá para ampliar).</li>
+        <li><b>Tabela mês a mês</b> com variação e filtros.</li>
+        <li><b>Comentários</b> do mês e <b>ações</b> (responsável e prazo).</li>
+        <li><b>Ver relatório detalhado</b>: abre o relatório externo, se houver endereço cadastrado.</li>
+        <li>Indicador <b>detalhado</b> (selo azul): clique no mês do gráfico ou da tabela para ver as linhas da consulta daquele mês, com filtro e planilha.</li>
+      </ul>
+    </div>
+    <div class="cartao">
+      <h3>Apresentação (botão <b>Apresentação</b>)</h3>
+      <p>Para TV e reunião: capa, panorama, um slide por assunto e pontos de atenção, passando sozinhos.</p>
+      <p><kbd>→</kbd> / <kbd>←</kbd> próximo e anterior · <kbd>Espaço</kbd> ou <kbd>P</kbd> pausa · <kbd>F</kbd> tela cheia · <kbd>Home</kbd> / <kbd>End</kbd> primeiro e último · <kbd>Esc</kbd> sai. No celular, deslize o dedo.</p>
+    </div>
+    <div class="cartao">
+      <h3>Imprimir e comentar</h3>
+      <p><b>Imprimir</b> gera a versão em folhas A4 do mês aberto (para PDF, escolha "Salvar como PDF").</p>
+      <p><b>Comentários</b>: no detalhe, registre o que explica o mês (até 400 caracteres), do assunto todo ou de um indicador. O autor é quem está logado.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section id="regras">
+  <h2><span class="n">3</span>Como cada número é julgado</h2>
+  <p class="sub">As regras são as mesmas no painel, no detalhe, na apresentação e na impressão.</p>
+  <h3>Farol do mês (só para indicador com meta)</h3>
+  <div class="rolar"><table class="tabela">
+    <thead><tr><th>Situação</th><th>Quando</th></tr></thead>
+    <tbody>
+      <tr><td><span class="selo s-meta">Na meta</span></td><td class="livre">Bateu a meta: acima dela quando "maior é melhor"; abaixo quando "menor é melhor". Igual à meta também conta.</td></tr>
+      <tr><td><span class="selo s-atencao">Atenção</span></td><td class="livre">Não bateu, mas ficou dentro da <b>faixa de atenção</b>. Ex.: meta 98,5%, faixa 0,5 → de 98,0% a 98,4% é Atenção.</td></tr>
+      <tr><td><span class="selo s-fora">Fora da meta</span></td><td class="livre">Passou da faixa de atenção (ou não há faixa e não bateu).</td></tr>
+      <tr><td><span class="selo s-sem">Sem dado</span></td><td class="livre">Não veio valor naquele mês.</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Tendência (últimos 6 meses)</h3>
+  <p>O book traça a reta dos últimos 6 meses e vê se ela vai a favor ou contra a direção do indicador:
+    <span class="selo s-melhor">Melhorando</span> <span class="selo s-estavel">Estável</span> <span class="selo s-pior">Piorando</span>.
+    "Estável" quando a variação é pequena: menos da metade da faixa de atenção (sem faixa, menos de 2,5% da média).
+    <b>Não se aplica</b> em indicador de acompanhamento ou com menos de 4 meses de dado.</p>
+  <h3>Pontos de atenção</h3>
+  <p>Entram na lista os números <b>fora da meta</b>, os que <b>pioram há 2 meses ou mais</b> e os <b>sem dado</b> no mês.</p>
+</section>
+
+<!-- 4 -->
+<section id="cadastro">
+  <h2><span class="n">4</span>Cadastro: passo a passo</h2>
+  <p class="sub">Botão <b>Cadastro</b> no topo (só aparece para quem tem acesso). Três abas: <b>Indicadores</b>, <b>Apresentação</b> e <b>Histórico</b>.</p>
+  <ol class="passos">
+    <li><div><b>Crie o assunto</b>: <b>Novo assunto</b>, escolha a área, o responsável e (se houver) o endereço do relatório detalhado. Veja os <a href="#assunto">campos do assunto</a>.</div></li>
+    <li><div><b>Crie os indicadores do assunto</b>: <b>Indicador</b> no cartão do assunto (ou <b>Novo indicador</b>). Preencha nome, definição, unidade, direção e meta. Veja os <a href="#indicador">campos do indicador</a>.</div></li>
+    <li><div><b>Cole a consulta SQL</b> e clique em <b>Testar consulta</b>: ele diz se vieram as 6 colunas, quantas linhas e meses, e mostra os últimos valores já calculados. Veja <a href="#consulta">a consulta SQL</a>.</div></li>
+    <li><div><b>Salve</b> (<b>Criar indicador</b>). O painel já mostra o indicador com os valores da consulta.</div></li>
+    <li><div><b>Ajuste a apresentação</b>: na aba <b>Apresentação</b>, ligue ou desligue assuntos e indicadores, escolha o número em destaque de cada assunto, os slides gerais (capa, panorama, pontos de atenção) e o tempo de cada slide.</div></li>
+  </ol>
+  <h3>No dia a dia</h3>
+  <ul>
+    <li><b>Editar</b>: altera qualquer campo. Toda mudança fica na aba <b>Histórico</b> (quem, quando, o quê).</li>
+    <li><b>Setas ↑ ↓</b>: mudam a ordem dos indicadores dentro do assunto.</li>
+    <li><b>Lixeira</b>: remove do book, mas nada é apagado. O item vai para <b>Removidos</b>, no fim da lista, e volta com <b>Restaurar</b> (ou <b>Desfazer</b>, logo após remover).</li>
+    <li><b>Na apresentação</b> (chave): tira ou põe o assunto ou indicador nos slides, sem tirá-lo do book.</li>
+    <li>Filtros <b>Fora da apresentação</b>, <b>Alterados</b> e <b>Novos</b>, e a busca, ajudam a achar o que mudou.</li>
+  </ul>
+</section>
+
+<!-- 5 -->
+<section id="assunto">
+  <h2><span class="n">5</span>Campos do assunto</h2>
+  <div class="rolar"><table class="tabela">
+    <thead><tr><th>Campo</th><th>Para que serve</th><th>Regra</th></tr></thead>
+    <tbody>
+      <tr><td>Nome do assunto</td><td class="livre">Título do cartão no painel e do slide.</td><td class="livre">Obrigatório, até 80 caracteres.</td></tr>
+      <tr><td>Área</td><td class="livre">Em que área o assunto aparece (filtro do painel).</td><td class="livre">Obrigatório. As áreas são cadastradas no banco (<code>TB_BOOK_AREA</code>).</td></tr>
+      <tr><td>Descrição</td><td class="livre">Texto curto no topo do detalhe: do que trata o assunto.</td><td class="livre">Opcional, até 400.</td></tr>
+      <tr><td>Responsável / Cargo</td><td class="livre">Quem responde pelo assunto. Aparece no cartão, no detalhe e no slide.</td><td class="livre">Responsável obrigatório.</td></tr>
+      <tr><td>Relatório detalhado (endereço)</td><td class="livre">Link do relatório completo (Power BI, SharePoint...). Abre no botão "Ver relatório detalhado".</td><td class="livre">Opcional, começando com <code>https://</code>. Vazio: o botão fica desabilitado.</td></tr>
+      <tr><td>Mostrar na apresentação</td><td class="livre">Se o assunto ganha slide.</td><td class="livre">Ligado por padrão.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 6 -->
+<section id="indicador">
+  <h2><span class="n">6</span>Campos do indicador</h2>
+  <div class="rolar"><table class="tabela">
+    <thead><tr><th>Campo</th><th>Para que serve</th><th>Opções e regras</th></tr></thead>
+    <tbody>
+      <tr><td>Assunto</td><td class="livre">Onde o indicador aparece.</td><td class="livre">Escolhido na criação; depois não muda.</td></tr>
+      <tr><td>Nome do indicador</td><td class="livre">Como aparece no book.</td><td class="livre">Obrigatório, até 80.</td></tr>
+      <tr><td>Definição</td><td class="livre">O que o número mede, em uma frase. Aparece no detalhe.</td><td class="livre">Até 300.</td></tr>
+      <tr><td>Unidade</td><td class="livre">Como o número é escrito.</td><td class="livre">Quantidade · Milhares · Percentual (%) · Dias · R$ milhões · Por mil. No percentual, a consulta devolve <code>98.5</code>, não <code>0.985</code>.</td></tr>
+      <tr><td>Casas decimais</td><td class="livre">Quantas casas mostrar.</td><td class="livre">0 a 3.</td></tr>
+      <tr><td>Direção</td><td class="livre">Diz se subir é bom ou ruim: define o farol e a cor da tendência.</td><td class="livre"><b>Maior é melhor</b> (vendas) · <b>Menor é melhor</b> (reclamações, prazo) · <b>Acompanhamento</b> (sem meta e sem tendência).</td></tr>
+      <tr><td>Meta</td><td class="livre">De onde vem a meta do mês.</td><td class="livre"><b>Valor fixo</b>: a mesma em todos os meses · <b>Sem meta</b>: só tendência · <b>Coluna SQL</b>: META e ATENCAO vêm da consulta, mês a mês · <b>Da fonte</b>: só para indicadores que vieram da carga inicial.</td></tr>
+      <tr><td>Valor da meta</td><td class="livre">A meta, quando "Valor fixo".</td><td class="livre">Número, na unidade do indicador.</td></tr>
+      <tr><td>Faixa de atenção</td><td class="livre">Quanto fora da meta ainda é <span class="selo s-atencao">Atenção</span> em vez de <span class="selo s-fora">Fora da meta</span>.</td><td class="livre">Na unidade do indicador (em %, pontos percentuais). Com "Coluna SQL", vem da coluna ATENCAO.</td></tr>
+      <tr><td>Valor de referência (exemplo)</td><td class="livre">Só para gerar uma série fictícia enquanto não há consulta ligada.</td><td class="livre">Ignorado quando a consulta traz os valores.</td></tr>
+      <tr><td>Tipo da consulta</td><td class="livre">Como ler as linhas da consulta.</td><td class="livre"><b>Sumarizado</b>: uma linha por mês · <b>Detalhado</b>: uma linha por CHAVE e mês (fica clicável no detalhe).</td></tr>
+      <tr><td>Como juntar as chaves do mês</td><td class="livre">No detalhado, como as chaves viram o número do mês.</td><td class="livre">Soma · Média · Contagem de chaves · Mínimo · Máximo.</td></tr>
+      <tr><td>Consulta</td><td class="livre">O SELECT que traz os números.</td><td class="livre">Até 4.000 caracteres. Ver <a href="#consulta">seção 7</a>.</td></tr>
+      <tr><td>Mostrar na apresentação</td><td class="livre">Se o indicador aparece no slide do assunto.</td><td class="livre">Ligado por padrão.</td></tr>
+      <tr><td>Destaque do assunto na apresentação</td><td class="livre">O número grande do slide do assunto.</td><td class="livre">Um por assunto. Sem destaque, o slide destaca o que mais pede atenção.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 7 -->
+<section id="consulta">
+  <h2><span class="n">7</span>A consulta SQL</h2>
+  <p class="sub">Cada indicador tem um SELECT. O book roda a consulta, confere as colunas e monta o número de cada mês.</p>
+  <h3>As 6 colunas obrigatórias (nomes exatos)</h3>
+  <div class="rolar"><table class="tabela">
+    <thead><tr><th>Coluna</th><th>O que é</th></tr></thead>
+    <tbody>
+      <tr><td><code>CHAVE</code></td><td class="livre">Identifica o registro: CNPJ, CHAVE_LOJA... No sumarizado pode ser um texto fixo (<code>'REDE'</code>).</td></tr>
+      <tr><td><code>PERIODO</code></td><td class="livre">O mês da linha: <code>202609</code> (INT ou texto), <code>'2026-09'</code> ou uma data (vale o mês dela). NULL ou vazio: veja abaixo.</td></tr>
+      <tr><td><code>VALOR</code></td><td class="livre">O número, na unidade do indicador.</td></tr>
+      <tr><td><code>META</code></td><td class="livre">A meta do mês. Só é lida com a meta em "Coluna SQL".</td></tr>
+      <tr><td><code>ATENCAO</code></td><td class="livre">A faixa de atenção do mês. Só é lida com a meta em "Coluna SQL".</td></tr>
+      <tr><td><code>REFERENCIA</code></td><td class="livre">Valor de referência (aparece no detalhe do mês).</td></tr>
+    </tbody>
+  </table></div>
+  <p>Se a sua base não tem <code>META</code>, <code>ATENCAO</code> ou <code>REFERENCIA</code>, devolva vazia: <code>CAST(NULL AS DECIMAL(18,4)) AS META</code>. <b>Colunas a mais</b> (nome da loja, UF...) são permitidas: aparecem só nas linhas do detalhe do mês.</p>
+
+  <h3>O mês de cada linha</h3>
+  <p>Os meses do book (o seletor de período) são fixos: os últimos 24 até o último mês fechado. Cada linha entra no mês do seu <code>PERIODO</code>. Para usar outra coluna como mês, dê a ela o nome <code>PERIODO</code> no SELECT (ex.: <code>DT_MOVIMENTO AS PERIODO</code>).</p>
+  <div class="rolar"><table class="tabela">
+    <thead><tr><th><code>PERIODO</code> da linha</th><th>Onde entra</th></tr></thead>
+    <tbody>
+      <tr><td><code>202609</code>, <code>'2026-09'</code>, data de set/2026</td><td class="livre">Setembro de 2026.</td></tr>
+      <tr><td>NULL ou <code>''</code></td><td class="livre"><b>Retrato do momento</b> (estoque, posição atual): entra no <b>último mês do book</b>. Os meses anteriores ficam sem dado.</td></tr>
+      <tr><td>Mês fora dos 24 do book</td><td class="livre">Não aparece.</td></tr>
+      <tr><td>Texto que não é mês</td><td class="livre">Fica de fora; o "Testar consulta" avisa quantas linhas.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Sumarizado ou detalhado</h3>
+  <div class="rolar"><table class="tabela">
+    <thead><tr><th>Tipo</th><th>Linhas</th><th>O que o book faz</th></tr></thead>
+    <tbody>
+      <tr><td>Sumarizado</td><td class="livre">Uma por mês</td><td class="livre">Lê o número como vier. Se vier mais de uma linha no mês, soma e avisa.</td></tr>
+      <tr><td>Detalhado</td><td class="livre">Uma por CHAVE e mês</td><td class="livre">Agrupa por CHAVE + PERIODO e junta as chaves do mês pela regra escolhida. No detalhe, o mês fica clicável e mostra essas linhas.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="rolar"><table class="tabela">
+    <thead><tr><th>Juntar as chaves</th><th>Número do mês</th><th>Use para</th></tr></thead>
+    <tbody>
+      <tr><td>Soma</td><td class="livre">Soma das chaves</td><td class="livre">Contratos, transações, volume em R$</td></tr>
+      <tr><td>Média</td><td class="livre">Média entre as chaves</td><td class="livre">Percentual por loja, prazo médio</td></tr>
+      <tr><td>Contagem de chaves</td><td class="livre">Quantas CHAVEs diferentes aparecem</td><td class="livre">Lojas ativas, correspondentes com venda</td></tr>
+      <tr><td>Mínimo / Máximo</td><td class="livre">O menor / maior entre as chaves</td><td class="livre">Pior ou melhor loja</td></tr>
+    </tbody>
+  </table></div>
+  <p>META, ATENCAO e REFERENCIA seguem a mesma regra (na contagem, vale o maior valor).</p>
+
+  <h3>Regras do texto</h3>
+  <ul>
+    <li>Começa com <code>SELECT</code> (ou <code>WITH</code>). <b>Um comando só</b>, sem <code>;</code>.</li>
+    <li><b>Sem <code>ORDER BY</code></b> no fim: o detalhe do mês filtra a consulta pelo <code>PERIODO</code>.</li>
+    <li><b>Só leitura</b>: <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>, <code>EXEC</code>, <code>INTO</code> e afins são recusados.</li>
+    <li>Traga os <b>últimos 24 meses</b> (um filtro no <code>WHERE</code> deixa tudo mais rápido).</li>
+    <li><b>Recomendado</b>: deixe o SQL numa view (<code>VW_BOOK_IND_&lt;NOME&gt;</code>) e cole no cadastro só <code>SELECT * FROM dbo.VW_BOOK_IND_&lt;NOME&gt;</code>. Quem cuida do banco ajusta a regra sem mexer no book.</li>
+  </ul>
+  <div class="nota nota--info"><b>Atualização</b><span>O resultado de cada consulta fica guardado por 30 minutos. Mudar o texto da consulta atualiza na hora; mudança só nos dados da base aparece quando esse tempo vence.</span></div>
+</section>
+
+<!-- 8 -->
+<section id="exemplos">
+  <h2><span class="n">8</span>Exemplos de consulta</h2>
+  <h3>Sumarizado: uma linha por mês (meta "Valor fixo")</h3>
+<pre><code>SELECT 'REDE'                                     AS CHAVE,
+       CONVERT(INT, FORMAT(D.DATA_REF, 'yyyyMM'))  AS PERIODO,
+       AVG(D.PERC_DISPONIVEL)                     AS VALOR,
+       CAST(NULL AS DECIMAL(18,4))                AS META,
+       CAST(NULL AS DECIMAL(18,4))                AS ATENCAO,
+       CAST(NULL AS DECIMAL(18,4))                AS REFERENCIA
+  FROM dbo.TB_DISPONIBILIDADE_DIARIA D
+ WHERE D.DATA_REF &gt;= DATEADD(MONTH, -24, GETDATE())
+ GROUP BY FORMAT(D.DATA_REF, 'yyyyMM')</code></pre>
+
+  <h3>Detalhado com soma e meta da consulta (meta "Coluna SQL")</h3>
+<pre><code>SELECT CNPJ_CORRESPONDENTE AS CHAVE,
+       ANOMES              AS PERIODO,
+       VOLUME_RS_MI        AS VALOR,
+       META_RS_MI          AS META,
+       ATENCAO_RS_MI       AS ATENCAO,
+       CAST(NULL AS DECIMAL(18,4)) AS REFERENCIA,
+       RAZAO_SOCIAL, MUNICIPIO, UF          <span class="c">-- extras: só no detalhe do mês</span>
+  FROM dbo.VW_BOOK_VOLUME_CORRESPONDENTE</code></pre>
+
+  <h3>Detalhado com contagem: lojas ativas</h3>
+<pre><code>SELECT CHAVE_LOJA AS CHAVE, ANOMES AS PERIODO, 1 AS VALOR,
+       CAST(NULL AS DECIMAL(18,4)) AS META,
+       CAST(NULL AS DECIMAL(18,4)) AS ATENCAO,
+       CAST(NULL AS DECIMAL(18,4)) AS REFERENCIA,
+       NOME_LOJA, UF
+  FROM dbo.TB_TRANSACOES_MES
+ WHERE QTD_TRANSACOES &gt; 0</code></pre>
+
+  <h3>Retrato do momento: sem mês</h3>
+<pre><code>SELECT NUM_CHAMADO AS CHAVE,
+       NULL        AS PERIODO,             <span class="c">-- entra no último mês do book</span>
+       1           AS VALOR,
+       CAST(NULL AS DECIMAL(18,4)) AS META,
+       CAST(NULL AS DECIMAL(18,4)) AS ATENCAO,
+       CAST(NULL AS DECIMAL(18,4)) AS REFERENCIA,
+       DT_ABERTURA, STATUS
+  FROM dbo.TB_CHAMADOS
+ WHERE STATUS = 'ABERTO'</code></pre>
+  <p>Com tipo <b>Detalhado</b> e "Contagem de chaves", o número do mês é quantos chamados estão abertos agora.</p>
+
+  <h3>O "Testar consulta" respondeu...</h3>
+  <div class="rolar"><table class="tabela">
+    <thead><tr><th>Mensagem</th><th>O que fazer</th></tr></thead>
+    <tbody>
+      <tr><td>Faltam as colunas: ...</td><td class="livre">Dê o nome exato no SELECT (<code>AS VALOR</code>...). Coluna que não existe na base: <code>CAST(NULL AS DECIMAL(18,4)) AS ...</code>.</td></tr>
+      <tr><td>0 meses do book com dado</td><td class="livre">O <code>PERIODO</code> não está no formato de mês, ou os meses estão fora dos últimos 24.</td></tr>
+      <tr><td>Mais de uma linha em ... numa consulta sumarizada</td><td class="livre">A consulta traz uma linha por chave: troque o tipo para <b>Detalhado</b>.</td></tr>
+      <tr><td>A consulta só pode ler dados</td><td class="livre">Tire o comando de escrita; use só SELECT.</td></tr>
+      <tr><td>Use um comando só</td><td class="livre">Tire o <code>;</code>.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 9 -->
+<section id="problemas">
+  <h2><span class="n">9</span>Problemas comuns</h2>
+  <div class="rolar"><table class="tabela">
+    <thead><tr><th>O que aparece</th><th>Causa e solução</th></tr></thead>
+    <tbody>
+      <tr><td>Selo "exemplo"</td><td class="livre">Os números são fictícios: o indicador ainda não tem consulta, ou o book não está ligado ao SQL Server.</td></tr>
+      <tr><td>Indicador "Sem dado"</td><td class="livre">A consulta não trouxe linha para aquele mês. Confira no "Testar consulta" quantos meses têm dado.</td></tr>
+      <tr><td>Erro de consulta no indicador</td><td class="livre">A consulta falhou no banco (tabela, permissão, sintaxe). Edite o indicador e use "Testar consulta" para ver a mensagem.</td></tr>
+      <tr><td>Não vejo o botão Cadastro</td><td class="livre">Entre (botão <b>Entrar</b>). Se continuar sem o botão, seu usuário não tem acesso ao cadastro: peça a liberação ao responsável pelo sistema.</td></tr>
+      <tr><td>"Book indisponível"</td><td class="livre">Para o responsável pelo sistema: abra <code>api/diagnostico.php</code> (tem login próprio). A linha "Montar o book" mostra o motivo.</td></tr>
+      <tr><td>Número mudou na base e não no book</td><td class="livre">Espere até 30 minutos (tempo guardado) ou salve o indicador de novo.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="nota nota--alerta"><b>Nada se perde</b><span>Remover só esconde: tudo volta pela lista Removidos, e cada alteração fica registrada na aba Histórico.</span></div>
+</section>
+
+<footer>Book Executivo de Indicadores · manual da versão 1.7 · referência técnica da migração: <code>docs/MIGRACAO_SQLSERVER.md</code></footer>
+</main>
+</div>
+</body>
+</html>
